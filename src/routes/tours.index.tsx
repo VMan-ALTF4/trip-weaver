@@ -41,7 +41,7 @@ function ToursPage() {
   const [cats, setCats] = useState<string[]>([]);
   const [pickups, setPickups] = useState<string[]>([]);
   const [view, setView] = useState<"split" | "list">("split");
-  const [activeId, setActiveId] = useState(tours[0].id);
+  const [activeId, setActiveId] = useState(tours[0]?.id ?? "");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const toggle = (list: string[], set: (v: string[]) => void, value: string) =>
@@ -69,7 +69,7 @@ function ToursPage() {
           min={20}
           max={200}
           step={5}
-          onValueChange={(v) => setMaxPrice(v[0])}
+          onValueChange={(v) => setMaxPrice(v[0] ?? maxPrice)}
           aria-label="Maximum price"
         />
         <p className="mt-2 text-sm">
