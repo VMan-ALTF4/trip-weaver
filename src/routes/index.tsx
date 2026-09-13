@@ -93,13 +93,13 @@ function HomePage() {
         </section>
 
         {/* Search hub */}
-        <section className="mx-auto -mt-20 max-w-6xl px-4 sm:px-6">
+        <section className="relative z-10 mx-auto -mt-20 max-w-6xl px-4 sm:px-6">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               navigate({ to: "/tours" });
             }}
-            className="rounded-2xl border border-border bg-card p-4 shadow-lift sm:p-6"
+            className="overflow-visible rounded-2xl border border-border bg-card p-6 shadow-lift"
             aria-label="Search tours and combos"
           >
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
