@@ -10,11 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as BookingSuccessRouteImport } from './routes/booking.success'
 import { Route as ToursIndexRouteImport } from './routes/tours.index'
+import { Route as ToursIdRouteImport } from './routes/tours.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingSuccessRoute = BookingSuccessRouteImport.update({
+  id: '/booking/success',
+  path: '/booking/success',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToursIndexRoute = ToursIndexRouteImport.update({
@@ -22,30 +41,70 @@ const ToursIndexRoute = ToursIndexRouteImport.update({
   path: '/tours/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ToursIdRoute = ToursIdRouteImport.update({
+  id: '/tours/$id',
+  path: '/tours/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/checkout': typeof CheckoutRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/booking/success': typeof BookingSuccessRoute
+  '/tours/$id': typeof ToursIdRoute
   '/tours/': typeof ToursIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/checkout': typeof CheckoutRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/booking/success': typeof BookingSuccessRoute
+  '/tours/$id': typeof ToursIdRoute
   '/tours': typeof ToursIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/checkout': typeof CheckoutRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/booking/success': typeof BookingSuccessRoute
+  '/tours/$id': typeof ToursIdRoute
   '/tours/': typeof ToursIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tours/'
+  fullPaths:
+    | '/'
+    | '/checkout'
+    | '/admin/dashboard'
+    | '/booking/success'
+    | '/tours/$id'
+    | '/tours/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tours'
-  id: '__root__' | '/' | '/tours/'
+  to:
+    | '/'
+    | '/checkout'
+    | '/admin/dashboard'
+    | '/booking/success'
+    | '/tours/$id'
+    | '/tours'
+  id:
+    | '__root__'
+    | '/'
+    | '/checkout'
+    | '/admin/dashboard'
+    | '/booking/success'
+    | '/tours/$id'
+    | '/tours/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CheckoutRoute: typeof CheckoutRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  BookingSuccessRoute: typeof BookingSuccessRoute
+  ToursIdRoute: typeof ToursIdRoute
   ToursIndexRoute: typeof ToursIndexRoute
 }
 
@@ -58,6 +117,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/booking/success': {
+      id: '/booking/success'
+      path: '/booking/success'
+      fullPath: '/booking/success'
+      preLoaderRoute: typeof BookingSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tours/': {
       id: '/tours/'
       path: '/tours'
@@ -65,11 +145,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ToursIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tours/$id': {
+      id: '/tours/$id'
+      path: '/tours/$id'
+      fullPath: '/tours/$id'
+      preLoaderRoute: typeof ToursIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CheckoutRoute: CheckoutRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  BookingSuccessRoute: BookingSuccessRoute,
+  ToursIdRoute: ToursIdRoute,
   ToursIndexRoute: ToursIndexRoute,
 }
 export const routeTree = rootRouteImport
