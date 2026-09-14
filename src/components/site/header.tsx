@@ -1,14 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { Compass, Globe, Menu, Coins, LogIn } from "lucide-react";
+import { Compass, Globe, Menu, Coins, LogIn, LogOut, Ticket, User as UserIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { AuthDialog, type AuthMode } from "@/components/auth/auth-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/use-auth";
 import { currencies, languages } from "@/lib/tat-data";
 
 const navLinks = [
