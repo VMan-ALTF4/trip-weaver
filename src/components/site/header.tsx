@@ -104,12 +104,58 @@ export function SiteHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" size="sm" className="hidden md:inline-flex">
-            <LogIn className="size-4" aria-hidden /> Log in
-          </Button>
-          <Button size="sm" variant="cta" className="hidden md:inline-flex">
-            Register
-          </Button>
+          {!loading && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden gap-2 md:inline-flex">
+                  <span className="grid size-5 place-items-center rounded-full surface-brand text-[10px] font-bold text-primary-foreground">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="max-w-28 truncate">{displayName}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate font-normal text-muted-foreground">
+                  {user.email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/booking/success">
+                    <Ticket className="size-4" aria-hidden /> My bookings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/dashboard">
+                    <UserIcon className="size-4" aria-hidden /> Admin dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleSignOut}>
+                  <LogOut className="size-4" aria-hidden /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:inline-flex"
+                onClick={() => openAuth("login")}
+              >
+                <LogIn className="size-4" aria-hidden /> Log in
+              </Button>
+              <Button
+                size="sm"
+                variant="cta"
+                className="hidden md:inline-flex"
+                onClick={() => openAuth("register")}
+              >
+                Register
+              </Button>
+            </>
+          )}
+
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
