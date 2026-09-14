@@ -177,14 +177,38 @@ export function SiteHeader() {
                   </Link>
                 ))}
                 <div className="mt-4 grid gap-2">
-                  <Button variant="outline">Log in with Google</Button>
-                  <Button variant="cta">Register with Email</Button>
+                  {!loading && user ? (
+                    <>
+                      <p className="px-1 text-sm text-muted-foreground">
+                        Signed in as <span className="font-medium text-foreground">{displayName}</span>
+                      </p>
+                      <Button variant="outline" onClick={handleSignOut}>
+                        <LogOut className="size-4" aria-hidden /> Sign out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" onClick={() => openAuth("login")}>
+                        Log in
+                      </Button>
+                      <Button variant="cta" onClick={() => openAuth("register")}>
+                        Register with Email
+                      </Button>
+                    </>
+                  )}
                 </div>
               </nav>
             </SheetContent>
           </Sheet>
         </div>
       </div>
+
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
     </header>
   );
 }
