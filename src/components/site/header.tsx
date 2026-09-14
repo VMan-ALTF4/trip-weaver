@@ -27,6 +27,22 @@ export function SiteHeader() {
   const [lang, setLang] = useState(languages[0]);
   const [currency, setCurrency] = useState(currencies[0]);
   const [open, setOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const { user, displayName, loading, signOut } = useAuth();
+
+  function openAuth(mode: AuthMode) {
+    setAuthMode(mode);
+    setAuthOpen(true);
+    setOpen(false);
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    setOpen(false);
+    toast.success("Signed out");
+  }
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-card/85 backdrop-blur-xl">
