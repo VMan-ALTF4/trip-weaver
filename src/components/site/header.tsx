@@ -1,14 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { Compass, Globe, Menu, Coins, LogIn } from "lucide-react";
+import { Compass, Globe, Menu, Coins, LogIn, LogOut, Ticket, User as UserIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { AuthDialog, type AuthMode } from "@/components/auth/auth-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/use-auth";
 import { currencies, languages } from "@/lib/tat-data";
 
 const navLinks = [
@@ -22,6 +27,22 @@ export function SiteHeader() {
   const [lang, setLang] = useState(languages[0]);
   const [currency, setCurrency] = useState(currencies[0]);
   const [open, setOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const { user, displayName, loading, signOut } = useAuth();
+
+  function openAuth(mode: AuthMode) {
+    setAuthMode(mode);
+    setAuthOpen(true);
+    setOpen(false);
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    setOpen(false);
+    toast.success("Signed out");
+  }
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-card/85 backdrop-blur-xl">
@@ -83,12 +104,58 @@ export function SiteHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" size="sm" className="hidden md:inline-flex">
-            <LogIn className="size-4" aria-hidden /> Log in
-          </Button>
-          <Button size="sm" variant="cta" className="hidden md:inline-flex">
-            Register
-          </Button>
+          {!loading && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden gap-2 md:inline-flex">
+                  <span className="grid size-5 place-items-center rounded-full surface-brand text-[10px] font-bold text-primary-foreground">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="max-w-28 truncate">{displayName}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate font-normal text-muted-foreground">
+                  {user.email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/booking/success">
+                    <Ticket className="size-4" aria-hidden /> My bookings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/dashboard">
+                    <UserIcon className="size-4" aria-hidden /> Admin dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleSignOut}>
+                  <LogOut className="size-4" aria-hidden /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:inline-flex"
+                onClick={() => openAuth("login")}
+              >
+                <LogIn className="size-4" aria-hidden /> Log in
+              </Button>
+              <Button
+                size="sm"
+                variant="cta"
+                className="hidden md:inline-flex"
+                onClick={() => openAuth("register")}
+              >
+                Register
+              </Button>
+            </>
+          )}
+
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -110,14 +177,38 @@ export function SiteHeader() {
                   </Link>
                 ))}
                 <div className="mt-4 grid gap-2">
-                  <Button variant="outline">Log in with Google</Button>
-                  <Button variant="cta">Register with Email</Button>
+                  {!loading && user ? (
+                    <>
+                      <p className="px-1 text-sm text-muted-foreground">
+                        Signed in as <span className="font-medium text-foreground">{displayName}</span>
+                      </p>
+                      <Button variant="outline" onClick={handleSignOut}>
+                        <LogOut className="size-4" aria-hidden /> Sign out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" onClick={() => openAuth("login")}>
+                        Log in
+                      </Button>
+                      <Button variant="cta" onClick={() => openAuth("register")}>
+                        Register with Email
+                      </Button>
+                    </>
+                  )}
                 </div>
               </nav>
             </SheetContent>
           </Sheet>
         </div>
       </div>
+
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
     </header>
   );
 }
