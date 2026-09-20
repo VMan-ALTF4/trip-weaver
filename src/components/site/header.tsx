@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
-import { currencies, languages } from "@/lib/tat-data";
+import { currencies } from "@/lib/tat-data";
+import { useLanguage, type Language } from "@/lib/language";
 
 const navLinks = [
   { to: "/tours", label: "Tours" },
@@ -24,12 +25,16 @@ const navLinks = [
 ] as const;
 
 export function SiteHeader() {
-  const [lang, setLang] = useState(languages[0]);
   const [currency, setCurrency] = useState(currencies[0]);
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const { user, displayName, loading, signOut } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
+  const languageOptions: { value: Language; label: string }[] = [
+    { value: "en", label: "English" },
+    { value: "vi", label: "Tiếng Việt" },
+  ];
 
   function openAuth(mode: AuthMode) {
     setAuthMode(mode);
@@ -40,7 +45,7 @@ export function SiteHeader() {
   async function handleSignOut() {
     await signOut();
     setOpen(false);
-    toast.success("Signed out");
+    toast.success(t("Signed out"));
   }
 
 
@@ -77,13 +82,13 @@ export function SiteHeader() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="hidden gap-1.5 sm:inline-flex">
-                <Globe className="size-4" aria-hidden /> {lang}
+                 <Globe className="size-4" aria-hidden /> {language === "en" ? "English" : "Tiếng Việt"}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {languages.map((l) => (
-                <DropdownMenuItem key={l} onSelect={() => setLang(l)}>
-                  {l}
+               {languageOptions.map((l) => (
+                 <DropdownMenuItem key={l.value} onSelect={() => setLanguage(l.value)}>
+                   {l.label}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -177,6 +182,19 @@ export function SiteHeader() {
                   </Link>
                 ))}
                 <div className="mt-4 grid gap-2">
+                  <div className="grid grid-cols-2 gap-2 pb-2">
+                    {languageOptions.map((option) => (
+                      <Button
+                        key={option.value}
+                        type="button"
+                        variant={language === option.value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setLanguage(option.value)}
+                      >
+                        <Globe className="size-4" aria-hidden /> {option.label}
+                      </Button>
+                    ))}
+                  </div>
                   {!loading && user ? (
                     <>
                       <p className="px-1 text-sm text-muted-foreground">

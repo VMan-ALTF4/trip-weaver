@@ -45,6 +45,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Book tours, seats and attraction tickets together with transparent pricing.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: HomePage,

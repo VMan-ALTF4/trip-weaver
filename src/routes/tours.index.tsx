@@ -26,6 +26,8 @@ export const Route = createFileRoute("/tours/")({
         property: "og:description",
         content: "Split-screen tour list and interactive route map with pickup points and attraction stops.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ToursPage,
