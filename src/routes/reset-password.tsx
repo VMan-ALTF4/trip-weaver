@@ -23,6 +23,8 @@ export const Route = createFileRoute("/reset-password")({
         property: "og:description",
         content: "Set a new password for your TAT Booking account.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ResetPasswordPage,

@@ -22,6 +22,10 @@ export const Route = createFileRoute("/checkout")({
     meta: [
       { title: "Checkout — TAT Booking" },
       { name: "description", content: "Review your combo booking and pay with VNPay, Momo, card or bank QR." },
+      { property: "og:title", content: "Checkout — TAT Booking" },
+      { property: "og:description", content: "Review your combo booking and pay with VNPay, Momo, card or bank QR." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CheckoutPage,

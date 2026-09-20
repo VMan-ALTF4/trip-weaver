@@ -23,6 +23,10 @@ export const Route = createFileRoute("/admin/dashboard")({
     meta: [
       { title: "Admin Dashboard — TAT Booking" },
       { name: "description", content: "Manage tours, transport, bookings and users." },
+      { property: "og:title", content: "Admin Dashboard — TAT Booking" },
+      { property: "og:description", content: "Manage tours, transport, bookings and users." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AdminPage,
