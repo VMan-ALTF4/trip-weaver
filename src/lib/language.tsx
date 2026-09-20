@@ -163,10 +163,14 @@ function translateText(value: string) {
   return value;
 }
 
-type LanguageContextValue = { language: Language; setLanguage: (language: Language) => void };
+type LanguageContextValue = {
+  language: Language;
+  setLanguage: (language: Language) => void;
+  t: (value: string) => string;
+};
 const LanguageContext = createContext<LanguageContextValue | null>(null);
-const originals = new WeakMap<Node, string>();
-const attrOriginals = new WeakMap<Element, Map<string, string>>();
+const originals = new WeakMap<Node, { source: string; translated: string }>();
+const attrOriginals = new WeakMap<Element, Map<string, { source: string; translated: string }>>();
 
 function translateDocument(language: Language) {
   if (typeof document === "undefined") return;
@@ -178,9 +182,10 @@ function translateDocument(language: Language) {
     const parent = node.parentElement;
     if (parent && !["SCRIPT", "STYLE"].includes(parent.tagName)) {
       const current = node.textContent ?? "";
-      if (!originals.has(node)) originals.set(node, current);
-      const source = originals.get(node) ?? current;
+       const saved = originals.get(node);
+       const source = saved && (current === saved.source || current === saved.translated) ? saved.source : current;
       const next = language === "vi" ? translateText(source) : source;
+       originals.set(node, { source, translated: next });
       if (current !== next) node.textContent = next;
     }
     node = walker.nextNode();
@@ -191,9 +196,11 @@ function translateDocument(language: Language) {
     for (const attr of ["aria-label", "placeholder", "title"]) {
       const current = element.getAttribute(attr);
       if (!current) continue;
-      if (!saved.has(attr)) saved.set(attr, current);
-      const source = saved.get(attr) ?? current;
-      element.setAttribute(attr, language === "vi" ? translateText(source) : source);
+       const previous = saved.get(attr);
+       const source = previous && (current === previous.source || current === previous.translated) ? previous.source : current;
+       const next = language === "vi" ? translateText(source) : source;
+       saved.set(attr, { source, translated: next });
+       element.setAttribute(attr, next);
     }
   });
 }
@@ -210,10 +217,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
     return () => observer.disconnect();
   }, [language]);
-  const value = useMemo(() => ({ language, setLanguage: (next: Language) => {
-    window.localStorage.setItem(STORAGE_KEY, next);
-    setLanguageState(next);
-  }}), [language]);
+   const value = useMemo(() => ({
+     language,
+     setLanguage: (next: Language) => {
+       window.localStorage.setItem(STORAGE_KEY, next);
+       setLanguageState(next);
+     },
+     t: (text: string) => language === "vi" ? translateText(text) : text,
+   }), [language]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 

@@ -238,7 +238,7 @@ export const pickupPoints = [
 ];
 
 export const currencies = ["USD", "VND", "EUR", "SGD"];
-export const languages = ["English", "Tiếng Việt", "ไทย", "日本語"];
+export const languages = ["English", "Tiếng Việt"] as const;
 
 export const formatPrice = (value: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
