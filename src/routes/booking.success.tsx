@@ -38,12 +38,15 @@ export const Route = createFileRoute("/booking/success")({
 function SuccessPage() {
   const draft = useBookingDraft();
   const breakdown = priceBreakdown(draft);
-  const [code] = useState(() => `TAT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`);
+  const [code, setCode] = useState("TAT-BOOKED");
   const [downloaded, setDownloaded] = useState(false);
 
   // re-hydrate after mount so SSR doesn't mismatch
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    setCode(`TAT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`);
+  }, []);
   const d = mounted ? draft : { ...draft, seats: [], addons: [] };
 
   return (
