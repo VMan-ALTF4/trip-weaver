@@ -122,7 +122,7 @@ const vi: Record<string, string> = {
   "Choose a new password for your TAT Booking account.": "Chọn mật khẩu mới cho tài khoản TAT Booking của bạn.",
   "Choose a new password for your TAT Booking account and get back to your trips.": "Chọn mật khẩu mới cho tài khoản TAT Booking và tiếp tục hành trình của bạn.",
   "Set a new password for your TAT Booking account.": "Đặt mật khẩu mới cho tài khoản TAT Booking của bạn.",
-  "Admin dashboard": "Trang quản trị", "Tours, transport, bookings and staff in one place.": "Quản lý tour, phương tiện, đặt chỗ và nhân viên tại một nơi.",
+  "Tours, transport, bookings and staff in one place.": "Quản lý tour, phương tiện, đặt chỗ và nhân viên tại một nơi.",
   "Manage tours, transport, bookings and users.": "Quản lý tour, phương tiện, đặt chỗ và người dùng.",
   "Settings": "Cài đặt", "Total bookings": "Tổng lượt đặt", "Revenue (30d)": "Doanh thu (30 ngày)", "Seat utilization": "Tỷ lệ sử dụng chỗ", "Active tours": "Tour đang hoạt động",
   "Tours & Catalog": "Tour & danh mục", "Transport & Providers": "Phương tiện & nhà cung cấp", "Bookings & Revenue": "Đặt chỗ & doanh thu", "Users & Security": "Người dùng & bảo mật",
@@ -195,7 +195,8 @@ const vi: Record<string, string> = {
   ,"Cruise": "Du thuyền", "UNESCO": "UNESCO", "Temples": "Đền chùa", "Trekking": "Đi bộ đường dài", "Overnight": "Qua đêm", "Evening": "Buổi tối", "Snorkeling": "Lặn biển", "Family": "Gia đình"
   ,"Tour coach on a coastal mountain road at sunset": "Xe du lịch trên cung đường núi ven biển lúc hoàng hôn"
   ,"Accept terms and conditions": "Chấp nhận điều khoản và điều kiện", "We sent a confirmation link to": "Chúng tôi đã gửi liên kết xác nhận đến", "Password reset link sent to": "Đã gửi liên kết đặt lại mật khẩu đến"
-  ,"Open it to activate your account.": "Hãy mở liên kết để kích hoạt tài khoản.", "pax": "hành khách", "Vehicle ticket": "Vé phương tiện"
+  ,"Open it to activate your account.": "Hãy mở liên kết để kích hoạt tài khoản.", "pax": "hành khách"
+  ,"Free cancellation up to 24h before departure.": "Hủy miễn phí trước giờ khởi hành tối đa 24 giờ."
   ,"TAT Booking — Tours, Transport & Attraction Combo Tickets": "TAT Booking — Tour, phương tiện & vé tham quan combo"
   ,"Explore destinations and book transport seats plus attraction entry in one combo e-ticket. Live seat maps, route maps and transparent pricing.": "Khám phá điểm đến, đặt chỗ phương tiện và vé tham quan trong một vé điện tử combo. Sơ đồ chỗ ngồi, bản đồ hành trình trực tiếp và giá minh bạch."
   ,"TAT Booking — One trip, one combo e-ticket": "TAT Booking — Một hành trình, một vé điện tử combo"
@@ -208,6 +209,7 @@ const vi: Record<string, string> = {
 const patterns: Array<[RegExp, (...parts: string[]) => string]> = [
   [/^\$(\d[\d,]*(?:\.\d+)?)$/, (amount) => `${amount.replace(/,/g, ".")} US$`],
   [/^(\d+) combos match your filters$/, (n) => `${n} combo phù hợp với bộ lọc`],
+  [/^(\d+) pax · Seats (.+)$/, (n, seats) => `${n} hành khách · Chỗ ${seats}`],
   [/^Up to$/, () => "Tối đa"],
   [/^Up to (.+) per person$/, (p) => `Tối đa ${p} mỗi người`],
   [/^Pick (\d+) seats?\. Selected:$/, (n) => `Chọn ${n} chỗ. Đã chọn:`],

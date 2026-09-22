@@ -17,6 +17,7 @@ import { SiteFooter } from "@/components/site/footer";
 import { Button } from "@/components/ui/button";
 import { useBookingDraft, priceBreakdown } from "@/lib/booking-store";
 import { formatPrice } from "@/lib/tat-data";
+import { useLanguage } from "@/lib/language";
 
 export const Route = createFileRoute("/booking/success")({
   head: () => ({
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/booking/success")({
 });
 
 function SuccessPage() {
+  const { t } = useLanguage();
   const draft = useBookingDraft();
   const breakdown = priceBreakdown(draft);
   const [code, setCode] = useState("TAT-BOOKED");
@@ -62,7 +64,7 @@ function SuccessPage() {
             </span>
             <div>
               <h1 className="font-display text-2xl font-extrabold sm:text-3xl">Booking confirmed!</h1>
-              <p className="text-sm text-primary-foreground/80">Your combo e-ticket is ready. Reference {code}.</p>
+              <p className="text-sm text-primary-foreground/80">{t(`Your combo e-ticket is ready. Reference ${code}.`)}</p>
             </div>
           </div>
         </div>

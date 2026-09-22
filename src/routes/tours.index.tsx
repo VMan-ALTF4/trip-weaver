@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice, tours, transportLabels, type TransportType } from "@/lib/tat-data";
+import { useLanguage } from "@/lib/language";
 
 export const Route = createFileRoute("/tours/")({
   head: () => ({
@@ -38,6 +39,7 @@ const categoryOptions = ["Nature", "Culture", "Beach", "Adventure", "Heritage", 
 const pickupOptions = ["City Center", "Central Station", "North Terminal", "Beach Resorts", "Airport Road"];
 
 function ToursPage() {
+  const { t } = useLanguage();
   const [maxPrice, setMaxPrice] = useState(160);
   const [transports, setTransports] = useState<string[]>([]);
   const [cats, setCats] = useState<string[]>([]);
@@ -110,7 +112,7 @@ function ToursPage() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
           <div className="min-w-0">
             <h1 className="truncate font-display text-2xl font-extrabold sm:text-3xl">Tours & route maps</h1>
-            <p className="text-sm text-muted-foreground">{filtered.length} combos match your filters</p>
+            <p className="text-sm text-muted-foreground">{t(`${filtered.length} combos match your filters`)}</p>
           </div>
           <div className="flex shrink-0 gap-2">
             <Button
