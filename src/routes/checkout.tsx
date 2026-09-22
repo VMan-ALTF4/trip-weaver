@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPrice } from "@/lib/tat-data";
 import { useBookingDraft, priceBreakdown } from "@/lib/booking-store";
+import { useLanguage } from "@/lib/language";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -39,6 +40,7 @@ const paymentMethods = [
 ];
 
 function CheckoutPage() {
+  const { t } = useLanguage();
   const draft = useBookingDraft();
   const navigate = useNavigate();
   const breakdown = priceBreakdown(draft);
@@ -155,13 +157,13 @@ function CheckoutPage() {
               <h2 className="font-display text-base font-bold">Booking summary</h2>
               <p className="mt-1 text-sm font-medium">{draft.tourTitle}</p>
               <p className="text-xs text-muted-foreground">
-                {draft.date} · {draft.passengers} pax · Seats {draft.seats.join(", ") || "—"}
+                {draft.date} · {t(`${draft.passengers} pax · Seats ${draft.seats.join(", ") || "—"}`)}
               </p>
 
               <dl className="mt-4 space-y-1.5 text-sm">
-                <SummaryRow label={`Vehicle ticket × ${Math.max(draft.seats.length || draft.passengers, 1)}`} value={formatPrice(breakdown.seatTotal)} />
-                <SummaryRow label={`Add-ons × ${draft.passengers}`} value={formatPrice(breakdown.addonsTotal)} />
-                <SummaryRow label={`Pickup · ${draft.pickupLabel}`} value={breakdown.subtotal === 0 ? "Free" : formatPrice(draft.pickupFee)} />
+                <SummaryRow label={t(`Vehicle ticket × ${Math.max(draft.seats.length || draft.passengers, 1)}`)} value={formatPrice(breakdown.seatTotal)} />
+                <SummaryRow label={t(`Add-ons × ${draft.passengers}`)} value={formatPrice(breakdown.addonsTotal)} />
+                <SummaryRow label={t(`Pickup · ${draft.pickupLabel}`)} value={draft.pickupFee === 0 ? t("Free") : formatPrice(draft.pickupFee)} />
                 <SummaryRow label="Taxes & fees (8%)" value={formatPrice(breakdown.taxes)} />
                 <div className="mt-2 flex items-center justify-between border-t border-border pt-2.5">
                   <dt className="font-display font-bold">Total payable</dt>
