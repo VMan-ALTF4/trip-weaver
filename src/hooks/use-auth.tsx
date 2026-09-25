@@ -8,8 +8,12 @@ export type OAuthProvider = "google" | "apple" | "microsoft";
 
 export type Profile = {
   id: string;
-  full_name: string | null;
+  name: string | null;
+  role: "admin" | "moderator" | "guest";
+  status: string;
+  sdt: string | null;
   email: string | null;
+  updated_at: string;
 };
 
 type AuthContextValue = {
@@ -61,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     supabase
       .from("profiles")
-      .select("id, full_name, email")
+      .select("id, name, role, status, sdt, email, updated_at")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -83,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       profile,
       loading,
-      displayName: profile?.full_name ?? metaName ?? user?.email?.split("@")[0] ?? "Traveller",
+      displayName: profile?.name ?? metaName ?? user?.email?.split("@")[0] ?? "Traveller",
 
       async signIn(email, password) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -96,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { full_name: fullName },
+            data: { name: fullName, full_name: fullName },
           },
         });
         return {
