@@ -13,6 +13,7 @@ import {
   Users,
   Car,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site/header";
 import { SiteFooter } from "@/components/site/footer";
@@ -37,6 +38,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTrigger,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/dashboard")({
   head: () => ({
@@ -142,6 +154,11 @@ function normalizeTourTransport(value: string): "bus" | "car" {
     : "bus";
 }
 
+function isTourAvailableForSale(status: string | null | undefined): boolean {
+  const normalized = status?.trim().toLocaleLowerCase();
+  return normalized === "còn bán" || normalized === "đang hoạt động" || normalized === "active" || normalized === "for sale";
+}
+
 function seatsPerVehicle(transport: string): number {
   return normalizeTourTransport(transport) === "car" ? 6 : 16;
 }
@@ -156,13 +173,33 @@ const recentBookings = [
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("Tours & Catalog");
+  const [activeTourCount, setActiveTourCount] = useState<number | null>(null);
+  const [tourStatsRevision, setTourStatsRevision] = useState(0);
   const { t: translate } = useLanguage();
   const { formatPrice } = useCurrency();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadActiveTourCount() {
+      const { data, error: queryError } = await tourTable.select("status_tour");
+      if (cancelled) return;
+      setActiveTourCount(
+        queryError ? null : (data ?? []).filter((tour) => isTourAvailableForSale(tour.status_tour)).length,
+      );
+    }
+
+    void loadActiveTourCount();
+    return () => {
+      cancelled = true;
+    };
+  }, [tourStatsRevision]);
+
   const stats = [
     { label: translate("Total bookings"), value: "1,284", delta: "+12.4%", Icon: Ticket },
     { label: translate("Revenue (30d)"), value: formatPrice(86420), delta: "+8.1%", Icon: DollarSign },
     { label: translate("Seat utilization"), value: "87%", delta: "+3.2pts", Icon: Bus },
-    { label: translate("Active tours"), value: "6", delta: "+1", Icon: LayoutDashboard },
+    { label: translate("Active tours"), value: activeTourCount === null ? "—" : String(activeTourCount), Icon: LayoutDashboard },
   ];
 
   return (
@@ -188,7 +225,7 @@ function AdminPage() {
                 <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
                   <s.Icon className="size-5" aria-hidden />
                 </span>
-                <span className="text-xs font-semibold text-teal">{s.delta}</span>
+                {s.delta && <span className="text-xs font-semibold text-teal">{s.delta}</span>}
               </div>
               <p className="mt-3 font-display text-2xl font-extrabold">{s.value}</p>
               <p className="text-sm text-muted-foreground">{s.label}</p>
@@ -212,7 +249,9 @@ function AdminPage() {
         </div>
 
         <div className="mt-6">
-          {tab === "Tours & Catalog" && <ToursTab />}
+          {tab === "Tours & Catalog" && (
+            <ToursTab onToursChanged={() => setTourStatsRevision((revision) => revision + 1)} />
+          )}
           {tab === "Transport & Providers" && <TransportTab />}
           {tab === "Bookings & Revenue" && <BookingsTab />}
           {tab === "Users & Security" && <UsersTab />}
@@ -224,7 +263,7 @@ function AdminPage() {
   );
 }
 
-function ToursTab() {
+function ToursTab({ onToursChanged }: { onToursChanged: () => void }) {
   const { t } = useLanguage();
   const { formatPrice } = useCurrency();
   const { refreshTours } = useTourCatalog();
@@ -309,9 +348,35 @@ function ToursTab() {
     } else {
       setEditorOpen(false);
       setEditingTour(null);
+      onToursChanged();
       await loadTours();
       await refreshTours();
     }
+    setSaving(false);
+  }
+
+  async function deleteTour() {
+    if (!editingTour) return;
+    const identifier = recordIdentifier(editingTour, "tour_id");
+    if (!identifier) {
+      setError(t("Unable to find the tour ID to delete."));
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    const { error: deleteError } = await tourTable.delete().eq(identifier.column, identifier.value);
+    if (deleteError) {
+      setError(deleteError.message);
+      setSaving(false);
+      return;
+    }
+
+    setEditorOpen(false);
+    setEditingTour(null);
+    onToursChanged();
+    await loadTours();
+    await refreshTours();
     setSaving(false);
   }
 
@@ -477,11 +542,42 @@ function ToursTab() {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditorOpen(false)}>{t("Cancel")}</Button>
-            <Button variant="cta" onClick={saveTour} disabled={saving}>
-              {saving ? t("Saving...") : editingTour ? t("Save changes") : t("Save tour")}
-            </Button>
+          <DialogFooter className="flex-col gap-3 sm:justify-between sm:space-x-0">
+            {editingTour && (
+              <AlertDialog>
+                <Button variant="destructive" disabled={saving} asChild>
+                  <AlertDialogTrigger>
+                    <Trash2 className="size-4" aria-hidden /> {t("Delete tour")}
+                  </AlertDialogTrigger>
+                </Button>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("Delete tour?")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("This action cannot be undone. The tour will be permanently deleted.")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void deleteTour();
+                      }}
+                    >
+                      {t("Delete tour")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditorOpen(false)}>{t("Cancel")}</Button>
+              <Button variant="cta" onClick={saveTour} disabled={saving}>
+                {saving ? t("Saving...") : editingTour ? t("Save changes") : t("Save tour")}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -782,7 +878,7 @@ function BookingsTab() {
 
 function UsersTab() {
   type ProfileListItem = Pick<Tables<"profiles">, "id" | "name" | "email" | "role" | "status" | "sdt" | "updated_at">;
-  type ProfileDraft = Pick<ProfileListItem, "role" | "status" | "sdt">;
+  type ProfileDraft = Pick<ProfileListItem, "role" | "status" | "sdt"> & { name: string };
   const { user, profile: currentProfile, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const [profiles, setProfiles] = useState<ProfileListItem[]>([]);
@@ -800,9 +896,13 @@ function UsersTab() {
     return canEditStatus || profile.id === user?.id;
   }
 
+  function canEditRole() {
+    return canEditAllFields;
+  }
+
   function startEditing(profile: ProfileListItem) {
     setEditingId(profile.id);
-    setDraft({ role: profile.role, status: profile.status, sdt: profile.sdt ?? "" });
+    setDraft({ name: profile.name ?? "", role: profile.role, status: profile.status, sdt: profile.sdt ?? "" });
     setError(null);
   }
 
@@ -815,11 +915,18 @@ function UsersTab() {
     if (!draft || !user) return;
 
     const isOwnProfile = profile.id === user.id;
-    const changes: Partial<ProfileDraft> = isOwnProfile && !canEditStatus
-      ? { sdt: draft.sdt }
-      : canEditAllFields
-        ? { role: draft.role, status: draft.status, sdt: draft.sdt }
-        : { status: draft.status };
+    const changes: Partial<Pick<ProfileListItem, "name" | "role" | "status" | "sdt">> = {};
+    if (canEditAllFields) changes.name = draft.name.trim() || null;
+
+    if (isOwnProfile && !canEditStatus) {
+      changes.sdt = draft.sdt;
+    } else if (canEditAllFields) {
+      if (canEditRole()) changes.role = draft.role;
+      changes.status = draft.status;
+      changes.sdt = draft.sdt;
+    } else {
+      changes.status = draft.status;
+    }
 
     setSaving(true);
     setError(null);
@@ -948,7 +1055,16 @@ function UsersTab() {
           )}
           {!loading && !error && profiles.map((profile) => (
             <tr key={profile.id} className="hover:bg-secondary/30">
-              <td className="px-4 py-3 font-medium">{profile.name ?? "Chưa cập nhật"}</td>
+              <td className="px-4 py-3 font-medium">
+                {editingId === profile.id && canEditAllFields ? (
+                  <Input
+                    aria-label={`Tên của ${profile.name ?? profile.email ?? "nhân viên"}`}
+                    className="w-full"
+                    value={draft?.name ?? ""}
+                    onChange={(event) => setDraft((currentDraft) => currentDraft ? { ...currentDraft, name: event.target.value } : currentDraft)}
+                  />
+                ) : profile.name ?? "Chưa cập nhật"}
+              </td>
               <td className="px-4 py-3 text-muted-foreground">{profile.email ?? "Chưa cập nhật"}</td>
               <td className="px-4 py-3 text-muted-foreground">
                 {editingId === profile.id ? (
@@ -961,7 +1077,7 @@ function UsersTab() {
                 ) : profile.sdt ?? "Chưa cập nhật"}
               </td>
               <td className="px-4 py-3">
-                {editingId === profile.id && canEditAllFields ? (
+                {editingId === profile.id && canEditRole() ? (
                   <select
                     aria-label={`Vai trò của ${profile.name ?? profile.email ?? "nhân viên"}`}
                     className="rounded-md border border-input bg-background px-2 py-1"
