@@ -124,6 +124,34 @@ const vi: Record<string, string> = {
   "Set a new password for your TAT Booking account.": "Đặt mật khẩu mới cho tài khoản TAT Booking của bạn.",
   "Tours, transport, bookings and staff in one place.": "Quản lý tour, phương tiện, đặt chỗ và nhân viên tại một nơi.",
   "Manage tours, transport, bookings and users.": "Quản lý tour, phương tiện, đặt chỗ và người dùng.",
+  "Add tour": "Thêm tour",
+  "Add tours and review the current catalog.": "Thêm tour và xem danh mục hiện tại.",
+  "Tour preview": "Ảnh xem trước tour",
+  "Image": "Ảnh",
+  "Vehicles": "Số lượng xe",
+  "Available slots": "Chỗ trống",
+  "Actions": "Thao tác",
+  "Loading tours...": "Đang tải tour...",
+  "No tours found.": "Chưa có tour nào.",
+  "Tour name": "Tên tour",
+  "Image URL or Storage path": "URL ảnh hoặc đường dẫn Storage",
+  "Paste a public image URL or Storage path": "Dán URL ảnh công khai hoặc đường dẫn Storage",
+  "Tour image preview": "Xem trước ảnh tour",
+  "Price (USD)": "Giá (USD)",
+  "Duration": "Thời lượng",
+  "Transport": "Phương tiện",
+  "Summary": "Mô tả ngắn",
+  "Tour status": "Trạng thái tour",
+  "For sale": "Còn bán",
+  "Temporarily closed": "Tạm đóng",
+  "Required vehicles": "Số xe cần thiết",
+  "Edit tour": "Sửa tour",
+  "Unable to find the tour ID to update.": "Không tìm thấy ID tour để cập nhật.",
+  "Saving...": "Đang lưu...",
+  "Save changes": "Lưu thay đổi",
+  "Save tour": "Lưu tour",
+  "Cancel": "Hủy",
+  "Sign in to view staff and roles.": "Đăng nhập để xem danh sách nhân viên và vai trò.",
   "Settings": "Cài đặt", "Total bookings": "Tổng lượt đặt", "Revenue (30d)": "Doanh thu (30 ngày)", "Seat utilization": "Tỷ lệ sử dụng chỗ", "Active tours": "Tour đang hoạt động",
   "Tours & Catalog": "Tour & danh mục", "Transport & Providers": "Phương tiện & nhà cung cấp", "Bookings & Revenue": "Đặt chỗ & doanh thu", "Users & Security": "Người dùng & bảo mật",
   "Tour": "Tour", "Destination": "Điểm đến", "Price": "Giá", "Rating": "Đánh giá", "Status": "Trạng thái", "Live": "Đang bán", "Edit": "Sửa", "Hide": "Ẩn",
@@ -205,6 +233,10 @@ const vi: Record<string, string> = {
   ,"Tour Detail & Seat Selection — TAT Booking": "Chi tiết tour & chọn chỗ — TAT Booking", "Checkout — TAT Booking": "Thanh toán — TAT Booking"
   ,"Combo E-Ticket Confirmed — TAT Booking": "Đã xác nhận vé điện tử combo — TAT Booking", "Admin Dashboard — TAT Booking": "Trang quản trị — TAT Booking", "Reset your password — TAT Booking": "Đặt lại mật khẩu — TAT Booking"
 };
+
+const en: Record<string, string> = Object.fromEntries(
+  Object.keys(vi).map((key) => [key, key]),
+);
 
 const patterns: Array<[RegExp, (...parts: string[]) => string]> = [
   [/^\$(\d[\d,]*(?:\.\d+)?)$/, (amount) => `${amount.replace(/,/g, ".")} US$`],
@@ -302,7 +334,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
        window.localStorage.setItem(STORAGE_KEY, next);
        setLanguageState(next);
      },
-     t: (text: string) => language === "vi" ? translateText(text) : text,
+    t: (text: string) => language === "vi" ? translateText(text) : (en[text] ?? text),
    }), [language]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }

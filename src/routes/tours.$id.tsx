@@ -37,6 +37,7 @@ import {
 import { saveDraft, type BookingDraft } from "@/lib/booking-store";
 import { useCurrency } from "@/lib/currency";
 import { useTourCatalog } from "@/lib/tour-catalog";
+import fallbackTourImage from "@/assets/hero-coast.jpg";
 
 export const Route = createFileRoute("/tours/$id")({
   head: () => ({
@@ -69,9 +70,9 @@ const takenSeats = new Set(["A2", "B1", "C5", "D4", "A6", "B8", "C3", "D9", "A10
 
 function TourDetailPage() {
   const { formatPrice } = useCurrency();
-  const { activeTours } = useTourCatalog();
+  const { activeTours, loading: toursLoading, error: toursError } = useTourCatalog();
   const { id } = Route.useParams();
-  const tour = activeTours.find((item) => item.id === id) ?? activeTours[0]!;
+  const tour = activeTours.find((item) => item.id === id);
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -80,6 +81,28 @@ function TourDetailPage() {
   const [seats, setSeats] = useState<string[]>([]);
   const [pickup, setPickup] = useState(pickupPoints[0]!.id);
   const [addons, setAddons] = useState<Record<string, boolean>>({});
+
+  if (!tour) {
+    const message = toursLoading
+      ? "Loading tour details..."
+      : toursError
+        ? `Unable to load tour details: ${toursError}`
+        : "This tour is no longer available.";
+    return (
+      <div className="min-h-screen">
+        <SiteHeader />
+        <main className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6">
+          <p role={toursError ? "alert" : undefined} className="text-sm text-muted-foreground">
+            {message}
+          </p>
+          <Button asChild variant="outline" className="mt-4">
+            <Link to="/tours">Back to tours</Link>
+          </Button>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
 
   const Icon = transportIcon[tour.transport];
 
@@ -139,7 +162,7 @@ function TourDetailPage() {
           <div className="min-w-0">
             <div className="overflow-hidden rounded-2xl border border-border shadow-soft">
               <img
-                src={tour.image}
+                src={tour.image || fallbackTourImage}
                 alt={`${tour.title} in ${tour.destination}`}
                 width={1024}
                 height={576}

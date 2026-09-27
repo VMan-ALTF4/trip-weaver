@@ -52,15 +52,14 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const destinations = ["Ha Long Bay", "Ayutthaya", "Sapa Highlands", "Hoi An", "Phu Quoc", "Da Lat"];
-
 function HomePage() {
-  const { activeTours } = useTourCatalog();
+  const { activeTours, loading, error } = useTourCatalog();
   const navigate = useNavigate();
-  const [destination, setDestination] = useState("Ha Long Bay");
+  const [destination, setDestination] = useState("");
   const [transport, setTransport] = useState("bus");
   const [dates, setDates] = useState("");
   const [pax, setPax] = useState("2");
+  const destinations = [...new Set(activeTours.map((tour) => tour.destination).filter(Boolean))];
 
   return (
     <div className="min-h-screen">
@@ -112,12 +111,12 @@ function HomePage() {
                 </Label>
                 <Select value={destination} onValueChange={setDestination}>
                   <SelectTrigger className="h-11 rounded-xl">
-                    <SelectValue />
+                    <SelectValue placeholder="Select a destination" />
                   </SelectTrigger>
                   <SelectContent>
-                    {destinations.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
+                    {destinations.map((item) => (
+                      <SelectItem key={item} value={item}>
+                        {item}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -197,9 +196,15 @@ function HomePage() {
           </div>
 
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {activeTours.map((t) => (
-              <TourCard key={t.id} tour={t} />
-            ))}
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading tours...</p>
+            ) : error ? (
+              <p role="alert" className="text-sm text-destructive">Unable to load tours: {error}</p>
+            ) : activeTours.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tours are currently available.</p>
+            ) : (
+              activeTours.map((tour) => <TourCard key={tour.id} tour={tour} />)
+            )}
           </div>
         </section>
 

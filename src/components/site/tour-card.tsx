@@ -3,6 +3,7 @@ import { Bus, Clock, MapPin, Star, Ticket, TrainFront, Car } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
 import { transportLabels, type Tour } from "@/lib/tat-data";
 import { useCurrency } from "@/lib/currency";
+import fallbackTourImage from "@/assets/hero-coast.jpg";
 
 const transportIcon = { bus: Bus, train: TrainFront, car: Car };
 
@@ -20,7 +21,7 @@ export function TourCard({ tour, layout = "grid" }: { tour: Tour; layout?: "grid
     >
       <div className={`relative shrink-0 overflow-hidden ${layout === "row" ? "sm:w-56" : ""}`}>
         <img
-          src={tour.image}
+          src={tour.image || fallbackTourImage}
           alt={`${tour.title} in ${tour.destination}`}
           loading="lazy"
           width={1024}

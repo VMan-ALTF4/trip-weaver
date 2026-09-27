@@ -37,20 +37,22 @@ export const Route = createFileRoute("/tours/")({
 });
 
 const transportOptions: TransportType[] = ["bus", "train", "car"];
-const categoryOptions = ["Nature", "Culture", "Beach", "Adventure", "Heritage", "Food"];
-const pickupOptions = ["City Center", "Central Station", "North Terminal", "Beach Resorts", "Airport Road"];
 
 function ToursPage() {
   const { t } = useLanguage();
   const { formatPrice } = useCurrency();
-  const { activeTours } = useTourCatalog();
-  const [maxPrice, setMaxPrice] = useState(160);
+  const { activeTours, loading, error } = useTourCatalog();
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [transports, setTransports] = useState<string[]>([]);
   const [cats, setCats] = useState<string[]>([]);
   const [pickups, setPickups] = useState<string[]>([]);
   const [view, setView] = useState<"split" | "list">("split");
   const [activeId, setActiveId] = useState(activeTours[0]?.id ?? "");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const maxPriceLimit = Math.max(20, Math.ceil(Math.max(0, ...activeTours.map((tour) => tour.price)) / 5) * 5);
+  const selectedMaxPrice = maxPrice ?? maxPriceLimit;
+  const categoryOptions = [...new Set(activeTours.flatMap((tour) => tour.categories))];
+  const pickupOptions = [...new Set(activeTours.map((tour) => tour.pickupZone).filter(Boolean))];
 
   const toggle = (list: string[], set: (v: string[]) => void, value: string) =>
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -59,12 +61,12 @@ function ToursPage() {
     () =>
       activeTours.filter(
         (t) =>
-          t.price <= maxPrice &&
+          t.price <= selectedMaxPrice &&
           (transports.length === 0 || transports.includes(t.transport)) &&
           (cats.length === 0 || t.categories.some((c) => cats.includes(c))) &&
           (pickups.length === 0 || pickups.includes(t.pickupZone)),
       ),
-    [activeTours, maxPrice, transports, cats, pickups],
+    [activeTours, selectedMaxPrice, transports, cats, pickups],
   );
 
   const sidebar = (
@@ -73,15 +75,15 @@ function ToursPage() {
         <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Price range</h2>
         <Slider
           className="mt-4"
-          value={[maxPrice]}
+          value={[selectedMaxPrice]}
           min={20}
-          max={200}
+          max={maxPriceLimit}
           step={5}
-          onValueChange={(v) => setMaxPrice(v[0] ?? maxPrice)}
+          onValueChange={(v) => setMaxPrice(v[0] ?? selectedMaxPrice)}
           aria-label="Maximum price"
         />
         <p className="mt-2 text-sm">
-          Up to <span className="font-semibold">{formatPrice(maxPrice)}</span> per person
+          Up to <span className="font-semibold">{formatPrice(selectedMaxPrice)}</span> per person
         </p>
       </div>
       <Separator />
@@ -91,20 +93,28 @@ function ToursPage() {
         selected={transports}
         onToggle={(v) => toggle(transports, setTransports, v)}
       />
-      <Separator />
-      <FilterGroup
-        title="Attraction categories"
-        options={categoryOptions.map((c) => ({ value: c, label: c }))}
-        selected={cats}
-        onToggle={(v) => toggle(cats, setCats, v)}
-      />
-      <Separator />
-      <FilterGroup
-        title="Pickup preference"
-        options={pickupOptions.map((p) => ({ value: p, label: p }))}
-        selected={pickups}
-        onToggle={(v) => toggle(pickups, setPickups, v)}
-      />
+      {categoryOptions.length > 0 && (
+        <>
+          <Separator />
+          <FilterGroup
+            title="Attraction categories"
+            options={categoryOptions.map((category) => ({ value: category, label: category }))}
+            selected={cats}
+            onToggle={(value) => toggle(cats, setCats, value)}
+          />
+        </>
+      )}
+      {pickupOptions.length > 0 && (
+        <>
+          <Separator />
+          <FilterGroup
+            title="Pickup preference"
+            options={pickupOptions.map((pickup) => ({ value: pickup, label: pickup }))}
+            selected={pickups}
+            onToggle={(value) => toggle(pickups, setPickups, value)}
+          />
+        </>
+      )}
     </div>
   );
 
@@ -116,7 +126,9 @@ function ToursPage() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
           <div className="min-w-0">
             <h1 className="truncate font-display text-2xl font-extrabold sm:text-3xl">Tours & route maps</h1>
-            <p className="text-sm text-muted-foreground">{t(`${filtered.length} combos match your filters`)}</p>
+            <p className="text-sm text-muted-foreground">
+              {loading ? "Loading tours..." : error ? "Tours could not be loaded" : t(`${filtered.length} combos match your filters`)}
+            </p>
           </div>
           <div className="flex shrink-0 gap-2">
             <Button
@@ -153,7 +165,19 @@ function ToursPage() {
 
           <div className={view === "split" ? "grid gap-6 xl:grid-cols-2" : ""}>
             <div className="grid gap-4">
-              {filtered.map((t) => (
+              {loading ? (
+                <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+                  Loading tours...
+                </p>
+              ) : error ? (
+                <p role="alert" className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-destructive">
+                  Unable to load tours: {error}
+                </p>
+              ) : filtered.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+                  No tours match these filters yet. Try widening the price range.
+                </p>
+              ) : filtered.map((t) => (
                 <button
                   key={t.id}
                   type="button"
@@ -166,16 +190,11 @@ function ToursPage() {
                   <TourCard tour={t} layout="row" />
                 </button>
               ))}
-              {filtered.length === 0 && (
-                <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-                  No tours match these filters yet. Try widening the price range.
-                </p>
-              )}
             </div>
 
-            {view === "split" && (
+            {view === "split" && filtered.length > 0 && (
               <div className="hidden xl:sticky xl:top-24 xl:block xl:h-[calc(100vh-8rem)]">
-                  <RouteMap tours={filtered.length ? filtered : activeTours} activeId={activeId} />
+                <RouteMap tours={filtered} activeId={activeId} />
               </div>
             )}
           </div>
