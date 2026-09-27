@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
-import { currencies } from "@/lib/tat-data";
+import { currencies, useCurrency } from "@/lib/currency";
 import { useLanguage, type Language } from "@/lib/language";
 
 const navLinks = [
@@ -25,11 +25,11 @@ const navLinks = [
 ] as const;
 
 export function SiteHeader() {
-  const [currency, setCurrency] = useState(currencies[0]);
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const { user, displayName, loading, signOut } = useAuth();
+  const { currency, setCurrency } = useCurrency();
   const { language, setLanguage, t } = useLanguage();
   const languageOptions: { value: Language; label: string }[] = [
     { value: "en", label: "English" },
@@ -192,6 +192,19 @@ export function SiteHeader() {
                         onClick={() => setLanguage(option.value)}
                       >
                         <Globe className="size-4" aria-hidden /> {option.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 pb-2">
+                    {currencies.map((option) => (
+                      <Button
+                        key={option}
+                        type="button"
+                        variant={currency === option ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrency(option)}
+                      >
+                        <Coins className="size-4" aria-hidden /> {option}
                       </Button>
                     ))}
                   </div>

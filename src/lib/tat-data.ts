@@ -237,8 +237,4 @@ export const pickupPoints = [
   { id: "airport-road", label: "Airport Road Shuttle Bay", time: "07:40", note: "+$4" },
 ];
 
-export const currencies = ["USD", "VND", "EUR", "SGD"];
 export const languages = ["English", "Tiếng Việt"] as const;
-
-export const formatPrice = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);

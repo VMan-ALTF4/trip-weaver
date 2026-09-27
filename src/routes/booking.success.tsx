@@ -16,7 +16,7 @@ import { SiteHeader } from "@/components/site/header";
 import { SiteFooter } from "@/components/site/footer";
 import { Button } from "@/components/ui/button";
 import { useBookingDraft, priceBreakdown } from "@/lib/booking-store";
-import { formatPrice } from "@/lib/tat-data";
+import { useCurrency } from "@/lib/currency";
 import { useLanguage } from "@/lib/language";
 
 export const Route = createFileRoute("/booking/success")({
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/booking/success")({
 
 function SuccessPage() {
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency();
   const draft = useBookingDraft();
   const breakdown = priceBreakdown(draft);
   const [code, setCode] = useState("TAT-BOOKED");

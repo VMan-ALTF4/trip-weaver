@@ -13,7 +13,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/hooks/use-auth";
+import { CurrencyProvider } from "@/lib/currency";
 import { LanguageProvider, useLanguage } from "@/lib/language";
+import { TourCatalogProvider } from "@/lib/tour-catalog";
 
 function NotFoundComponent() {
   const { t } = useLanguage();
@@ -132,11 +134,15 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <AuthProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          <Toaster richColors position="top-center" />
-        </AuthProvider>
+        <CurrencyProvider>
+          <TourCatalogProvider>
+            <AuthProvider>
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+              <Toaster richColors position="top-center" />
+            </AuthProvider>
+          </TourCatalogProvider>
+        </CurrencyProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

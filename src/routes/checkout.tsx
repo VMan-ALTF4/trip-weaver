@@ -14,7 +14,7 @@ import { SiteFooter } from "@/components/site/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatPrice } from "@/lib/tat-data";
+import { useCurrency } from "@/lib/currency";
 import { useBookingDraft, priceBreakdown } from "@/lib/booking-store";
 import { useLanguage } from "@/lib/language";
 
@@ -41,6 +41,7 @@ const paymentMethods = [
 
 function CheckoutPage() {
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency();
   const draft = useBookingDraft();
   const navigate = useNavigate();
   const breakdown = priceBreakdown(draft);
