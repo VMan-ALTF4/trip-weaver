@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
   Bus,
@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTourCatalog } from "@/lib/tour-catalog";
+import type { Tour, TransportType } from "@/lib/tat-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -53,13 +54,36 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { activeTours, loading, error } = useTourCatalog();
-  const navigate = useNavigate();
+  const { activeTours, loading, error, searchTours } = useTourCatalog();
   const [destination, setDestination] = useState("");
-  const [transport, setTransport] = useState("bus");
+  const [transport, setTransport] = useState<TransportType>("bus");
   const [dates, setDates] = useState("");
   const [pax, setPax] = useState("2");
+  const [searchResults, setSearchResults] = useState<Tour[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const destinations = [...new Set(activeTours.map((tour) => tour.destination).filter(Boolean))];
+
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSearching(true);
+    setSearchError(null);
+    setSearchResults(null);
+
+    try {
+      const results = await searchTours({
+        destination,
+        transport,
+        travelDate: dates,
+        passengers: Number(pax) || 1,
+      });
+      setSearchResults(results);
+    } catch (queryError) {
+      setSearchError(queryError instanceof Error ? queryError.message : "Unable to search tours.");
+    } finally {
+      setSearching(false);
+    }
+  }
 
   return (
     <div className="min-h-screen">
@@ -97,10 +121,7 @@ function HomePage() {
         {/* Search hub */}
         <section className="relative z-10 mx-auto -mt-20 max-w-6xl px-4 sm:px-6">
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              navigate({ to: "/tours" });
-            }}
+            onSubmit={handleSearch}
             className="overflow-visible rounded-2xl border border-border bg-card p-6 shadow-lift"
             aria-label="Search tours and combos"
           >
@@ -127,7 +148,7 @@ function HomePage() {
                 <Label className="text-xs text-muted-foreground">
                   <Bus className="mr-1 inline size-3.5" aria-hidden /> Transport type
                 </Label>
-                <Select value={transport} onValueChange={setTransport}>
+                <Select value={transport} onValueChange={(value) => setTransport(value as TransportType)}>
                   <SelectTrigger className="h-11 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
@@ -172,12 +193,31 @@ function HomePage() {
               <p className="text-xs text-muted-foreground">
                 Free cancellation up to 24h before departure on most combos.
               </p>
-              <Button type="submit" variant="cta" size="lg" className="w-full sm:w-auto">
-                <Search className="size-4" aria-hidden /> Search Tours & Combos
+              <Button type="submit" variant="cta" size="lg" className="w-full sm:w-auto" disabled={searching}>
+                <Search className="size-4" aria-hidden /> {searching ? "Searching..." : "Search Tours & Combos"}
               </Button>
             </div>
           </form>
         </section>
+
+        {(searching || searchError || searchResults !== null) && (
+          <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6" aria-live="polite">
+            <h2 className="font-display text-2xl font-extrabold">Search results</h2>
+            {searching ? (
+              <p className="mt-4 text-sm text-muted-foreground">Searching tours...</p>
+            ) : searchError ? (
+              <p role="alert" className="mt-4 text-sm text-destructive">Unable to search tours: {searchError}</p>
+            ) : searchResults?.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">No tours match your search. Try changing your filters.</p>
+            ) : (
+              <div className="mt-5 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {searchResults?.map((tour) => (
+                  <TourCard key={tour.id} tour={tour} passengers={Number(pax) || 1} />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Featured tours */}
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">

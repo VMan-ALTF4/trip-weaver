@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Bus, Clock, MapPin, Star, Ticket, TrainFront, Car } from "lucide-react";
+import { Bus, CalendarDays, Clock, MapPin, Star, Ticket, TrainFront, Car } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { transportLabels, type Tour } from "@/lib/tat-data";
 import { useCurrency } from "@/lib/currency";
@@ -7,7 +7,20 @@ import fallbackTourImage from "@/assets/hero-coast.jpg";
 
 const transportIcon = { bus: Bus, train: TrainFront, car: Car };
 
-export function TourCard({ tour, layout = "grid" }: { tour: Tour; layout?: "grid" | "row" }) {
+function formatTravelDate(value: string): string {
+  const [year, month, day] = value.slice(0, 10).split("-");
+  return year && month && day ? `${day}/${month}/${year}` : value;
+}
+
+export function TourCard({
+  tour,
+  layout = "grid",
+  passengers,
+}: {
+  tour: Tour;
+  layout?: "grid" | "row";
+  passengers?: number;
+}) {
   const { formatPrice } = useCurrency();
   const Icon = transportIcon[tour.transport];
 
@@ -15,6 +28,7 @@ export function TourCard({ tour, layout = "grid" }: { tour: Tour; layout?: "grid
     <Link
       to="/tours/$id"
       params={{ id: tour.id }}
+      search={{ passengers }}
       className={`group flex overflow-hidden rounded-xl border border-border bg-card shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift ${
         layout === "row" ? "flex-col sm:flex-row" : "flex-col"
       }`}
@@ -61,6 +75,12 @@ export function TourCard({ tour, layout = "grid" }: { tour: Tour; layout?: "grid
           <Badge variant="outline" className="gap-1 font-medium">
             <Clock className="size-3.5" aria-hidden /> {tour.duration}
           </Badge>
+          {tour.travelDate && (
+            <Badge variant="outline" className="gap-1 font-medium">
+              <CalendarDays className="size-3.5" aria-hidden />
+              <time dateTime={tour.travelDate}>{formatTravelDate(tour.travelDate)}</time>
+            </Badge>
+          )}
           {tour.oldPrice && (
             <span className="ml-auto text-xs line-through">{formatPrice(tour.oldPrice)}</span>
           )}

@@ -1,10 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   Bus,
-  Check,
   Clock,
   MapPin,
   Star,
@@ -23,6 +22,14 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -40,6 +47,12 @@ import { useTourCatalog } from "@/lib/tour-catalog";
 import fallbackTourImage from "@/assets/hero-coast.jpg";
 
 export const Route = createFileRoute("/tours/$id")({
+  validateSearch: (search: Record<string, unknown>) => {
+    const passengers = Number(search["passengers"]);
+    return {
+      passengers: Number.isInteger(passengers) && passengers > 0 ? passengers : undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Tour Detail & Seat Selection — TAT Booking" },
@@ -62,25 +75,30 @@ const transportIcon: Record<TransportType, typeof Bus> = {
   car: Car,
 };
 
-// Simple coach seat map: 10 rows, 2+2 layout
+// Coach seat map: eight 2+2 rows and a final 2+3 row, for 37 total.
 const seatRows = ["A", "B", "", "C", "D"];
-const seatNumbers = Array.from({ length: 10 }, (_, i) => i + 1);
+const seatNumbers = Array.from({ length: 9 }, (_, i) => i + 1);
 // pre-occupy some seats to simulate real-time availability
-const takenSeats = new Set(["A2", "B1", "C5", "D4", "A6", "B8", "C3", "D9", "A10", "B5"]);
+const takenSeats = new Set(["A2", "B1", "C5", "D4", "A6", "B8", "C3", "A9", "B5"]);
 
 function TourDetailPage() {
   const { formatPrice } = useCurrency();
   const { activeTours, loading: toursLoading, error: toursError } = useTourCatalog();
   const { id } = Route.useParams();
+  const { passengers: searchPassengers } = Route.useSearch();
   const tour = activeTours.find((item) => item.id === id);
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
-  const [date, setDate] = useState("");
-  const [pax, setPax] = useState(2);
+  const [pax, setPax] = useState(searchPassengers ?? 2);
   const [seats, setSeats] = useState<string[]>([]);
   const [pickup, setPickup] = useState(pickupPoints[0]!.id);
   const [addons, setAddons] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setPax(searchPassengers ?? 2);
+    setSeats([]);
+  }, [searchPassengers]);
 
   if (!tour) {
     const message = toursLoading
@@ -105,6 +123,7 @@ function TourDetailPage() {
   }
 
   const Icon = transportIcon[tour.transport];
+  const timeline = tour.timeline?.length ? tour.timeline : tour.itinerary;
 
   const toggleSeat = (seat: string) => {
     if (takenSeats.has(seat)) return;
@@ -131,7 +150,7 @@ function TourDetailPage() {
     const draft: BookingDraft = {
       tourId: tour.id,
       tourTitle: tour.title,
-      date: date || "2026-10-12",
+      date: tour.travelDate || "2026-10-12",
       passengers: pax,
       seats: seats.length ? seats : ["B3", "B4"].slice(0, pax),
       seatPrice: tour.price,
@@ -197,46 +216,36 @@ function TourDetailPage() {
 
             <p className="mt-4 text-sm text-muted-foreground">{tour.summary}</p>
 
-            {/* Itinerary */}
-            <section className="mt-8">
-              <h2 className="font-display text-lg font-bold">Itinerary timeline</h2>
-              <ol className="mt-4 space-y-4 border-l border-border pl-5">
-                {tour.itinerary.map((it, i) => (
-                  <li key={i} className="relative">
-                    <span className="absolute -left-[26px] top-1 grid size-3 place-items-center rounded-full bg-primary ring-4 ring-background" />
-                    <p className="text-xs font-semibold text-primary">{it.time}</p>
-                    <p className="font-display text-sm font-bold">{it.title}</p>
-                    <p className="text-sm text-muted-foreground">{it.detail}</p>
-                  </li>
-                ))}
-              </ol>
-            </section>
+            <div className="mt-6">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="cta" className="gap-2">
+                    <CalendarDays className="size-4" aria-hidden /> View itinerary timeline
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+                  <DialogHeader>
+                    <DialogTitle>Itinerary timeline</DialogTitle>
+                    <DialogDescription>{tour.title}</DialogDescription>
+                  </DialogHeader>
+                  {timeline.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No itinerary available.</p>
+                  ) : (
+                    <ol className="space-y-4 border-l border-border pl-5">
+                      {timeline.map((item, index) => (
+                        <li key={`${item.time}-${index}`} className="relative">
+                          <span className="absolute -left-[26px] top-1 grid size-3 place-items-center rounded-full bg-primary ring-4 ring-background" />
+                          <p className="text-xs font-semibold text-primary">{item.time}</p>
+                          <p className="font-display text-sm font-bold">{item.title}</p>
+                          {item.detail && <p className="text-sm text-muted-foreground">{item.detail}</p>}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </div>
 
-            {/* Included / excluded */}
-            <section className="mt-8 grid gap-6 sm:grid-cols-2">
-              <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
-                <h3 className="font-display text-sm font-bold uppercase tracking-wide text-teal">Included</h3>
-                <ul className="mt-3 space-y-2 text-sm">
-                  {tour.included.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <Check className="mt-0.5 size-4 shrink-0 text-teal" aria-hidden /> {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
-                <h3 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
-                  Not included
-                </h3>
-                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                  {tour.excluded.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" aria-hidden /> {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
           </div>
 
           {/* Right: sticky booking widget */}
@@ -275,8 +284,8 @@ function TourDetailPage() {
                     <Input
                       id="detail-date"
                       type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
+                      value={tour.travelDate ?? ""}
+                      disabled
                       className="h-11 rounded-xl"
                     />
                   </div>
@@ -311,24 +320,27 @@ function TourDetailPage() {
                       Front of coach
                     </div>
                     <div className="space-y-1.5">
-                      {seatNumbers.map((row) => (
-                        <div key={row} className="flex items-center justify-center gap-1.5">
-                          <span className="w-4 text-center text-[10px] text-muted-foreground">{row}</span>
-                          {seatRows.map((col, idx) =>
-                            col === "" ? (
-                              <span key={`aisle-${row}-${idx}`} className="w-5" aria-hidden />
-                            ) : (
-                              <SeatButton
-                                key={`${col}${row}`}
-                                seat={`${col}${row}`}
-                                taken={takenSeats.has(`${col}${row}`)}
-                                selected={seats.includes(`${col}${row}`)}
-                                onClick={() => toggleSeat(`${col}${row}`)}
-                              />
-                            ),
-                          )}
-                        </div>
-                      ))}
+                      {seatNumbers.map((row) => {
+                        const rowSeats = row === seatNumbers.length ? ["A", "B", "C", "D", "E"] : seatRows;
+                        return (
+                          <div key={row} className="flex items-center justify-center gap-1.5">
+                            <span className="w-4 text-center text-[10px] text-muted-foreground">{row}</span>
+                            {rowSeats.map((col, idx) =>
+                              col === "" ? (
+                                <span key={`aisle-${row}-${idx}`} className="w-5" aria-hidden />
+                              ) : (
+                                <SeatButton
+                                  key={`${col}${row}`}
+                                  seat={`${col}${row}`}
+                                  taken={takenSeats.has(`${col}${row}`)}
+                                  selected={seats.includes(`${col}${row}`)}
+                                  onClick={() => toggleSeat(`${col}${row}`)}
+                                />
+                              ),
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                     <div className="mt-3 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
                       <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-primary" /> Selected</span>

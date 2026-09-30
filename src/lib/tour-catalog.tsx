@@ -9,9 +9,16 @@ type TourCatalogValue = {
   loading: boolean;
   error: string | null;
   refreshTours: () => Promise<void>;
+  searchTours: (filters: TourSearchFilters) => Promise<Tour[]>;
 };
 
 type TourRecord = Record<string, unknown>;
+type TourSearchFilters = {
+  destination: string;
+  transport: TransportType;
+  travelDate: string;
+  passengers: number;
+};
 
 const TourCatalogContext = createContext<TourCatalogValue | null>(null);
 
@@ -33,6 +40,18 @@ function stringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+function timelineArray(value: unknown): NonNullable<Tour["timeline"]> {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((entry) => {
+    if (typeof entry !== "object" || entry === null) return [];
+    const activity = entry as Record<string, unknown>;
+    const time = activity["time"];
+    const title = activity["title"];
+    return typeof time === "string" && typeof title === "string" ? [{ time, title }] : [];
+  });
 }
 
 function isAvailableTour(record: TourRecord): boolean {
@@ -65,6 +84,7 @@ function mapTour(record: TourRecord): Tour | null {
     id,
     title,
     destination: textValue(record, "destination"),
+    travelDate: textValue(record, "travel_date").slice(0, 10),
     image: getTourImageUrl(textValue(record, "image_url", "image", "thumbnail_url")),
     price: numberValue(record["price"]),
     ...(numberValue(record["old_price"]) > 0 ? { oldPrice: numberValue(record["old_price"]) } : {}),
@@ -77,11 +97,42 @@ function mapTour(record: TourRecord): Tour | null {
     pickupZone: textValue(record, "pickup_zone"),
     summary: textValue(record, "summary", "description"),
     attractions: stringArray(record["attractions"]),
+    timeline: timelineArray(record["timeline"]),
     itinerary: [],
     included: stringArray(record["included"]),
     excluded: stringArray(record["excluded"]),
     mapPoints: [],
   };
+}
+
+async function searchTourCatalog(filters: TourSearchFilters): Promise<Tour[]> {
+  let query = (supabase as unknown as SupabaseClient).from("Tour").select("*");
+
+  if (filters.destination.trim()) {
+    query = query.ilike("destination", `%${filters.destination.trim()}%`);
+  }
+  if (filters.transport) {
+    const transportFilters: Record<TransportType, string> = {
+      bus: "transport.ilike.%bus%,transport.ilike.%coach%,transport.ilike.%xe khách%",
+      train: "transport.ilike.%train%,transport.ilike.%rail%,transport.ilike.%tàu%",
+      car: "transport.ilike.%car%,transport.ilike.%private%,transport.ilike.%xe riêng%",
+    };
+    query = query.or(transportFilters[filters.transport]);
+  }
+  if (filters.travelDate) {
+    query = query.eq("travel_date", filters.travelDate);
+  }
+  if (filters.passengers > 0) {
+    query = query.gte("available_slot", filters.passengers);
+  }
+
+  const { data, error: queryError } = await query;
+  if (queryError) throw queryError;
+
+  return ((data ?? []) as TourRecord[])
+    .filter(isAvailableTour)
+    .map(mapTour)
+    .filter((tour): tour is Tour => tour !== null);
 }
 
 export function TourCatalogProvider({ children }: { children: ReactNode }) {
@@ -121,7 +172,7 @@ export function TourCatalogProvider({ children }: { children: ReactNode }) {
   }, [refreshTours]);
 
   return (
-    <TourCatalogContext.Provider value={{ activeTours, loading, error, refreshTours }}>
+    <TourCatalogContext.Provider value={{ activeTours, loading, error, refreshTours, searchTours: searchTourCatalog }}>
       {children}
     </TourCatalogContext.Provider>
   );

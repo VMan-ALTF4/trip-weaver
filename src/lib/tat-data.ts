@@ -6,11 +6,13 @@ import island from "@/assets/tour-island.jpg";
 import waterfall from "@/assets/tour-waterfall.jpg";
 
 export type TransportType = "bus" | "train" | "car";
+export type TourTimelineItem = { time: string; title: string; detail?: string };
 
 export type Tour = {
   id: string;
   title: string;
   destination: string;
+  travelDate?: string;
   image: string;
   price: number;
   oldPrice?: number;
@@ -23,6 +25,7 @@ export type Tour = {
   pickupZone: string;
   summary: string;
   attractions: string[];
+  timeline?: TourTimelineItem[];
   itinerary: { time: string; title: string; detail: string }[];
   included: string[];
   excluded: string[];

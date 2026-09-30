@@ -69,6 +69,11 @@ const transportIcon = { bus: Bus, train: TrainFront, car: Car } as const;
 const tabs = ["Tours & Catalog", "Transport & Providers", "Bookings & Revenue", "Users & Security"] as const;
 type Tab = (typeof tabs)[number];
 
+type TimelineActivity = {
+  time: string;
+  title: string;
+};
+
 type TourRecord = {
   tour_id?: string;
   id?: string;
@@ -80,13 +85,16 @@ type TourRecord = {
   summary: string;
   rating: number;
   status_tour: string;
+  travel_date?: string | null;
+  timeline?: TimelineActivity[] | null;
   required_vehicles_count: number;
   available_slot: number;
   image_url?: string | null;
 };
 
-type TourDraft = Omit<TourRecord, "rating" | "tour_id" | "id" | "image_url"> & {
+type TourDraft = Omit<TourRecord, "rating" | "tour_id" | "id" | "image_url" | "timeline"> & {
   image_url: string;
+  timeline: TimelineActivity[];
 };
 
 type TourOption = { id: string; tour_name: string };
@@ -110,6 +118,14 @@ type VehicleDraft = Omit<VehicleRecord, "vehicle_id" | "id" | "Tour" | "status">
   status: VehicleStatus;
 };
 
+function createDefaultTimeline(): TimelineActivity[] {
+  return [
+    { time: "08:00", title: "Đón khách" },
+    { time: "09:30", title: "Tham quan" },
+    { time: "12:00", title: "Ăn trưa" },
+  ];
+}
+
 const emptyTourDraft: TourDraft = {
   tour_name: "",
   destination: "",
@@ -118,6 +134,8 @@ const emptyTourDraft: TourDraft = {
   transport: "bus",
   summary: "",
   status_tour: "còn bán",
+  travel_date: "",
+  timeline: createDefaultTimeline(),
   required_vehicles_count: 0,
   available_slot: 0,
   image_url: "",
@@ -143,8 +161,8 @@ function normalizeVehicleStatus(value: string | null | undefined): VehicleStatus
   return normalized === "inactive" || normalized === "đang tạm dừng" ? "inactive" : "active";
 }
 
-function vehicleStatusLabel(value: string | null | undefined): string {
-  return normalizeVehicleStatus(value) === "active" ? "Đang hoạt động" : "Đang tạm dừng";
+function vehicleStatusLabel(value: string | null | undefined, translate: (value: string) => string): string {
+  return translate(normalizeVehicleStatus(value) === "active" ? "Active" : "Inactive");
 }
 
 function normalizeTourTransport(value: string): "bus" | "car" {
@@ -160,7 +178,7 @@ function isTourAvailableForSale(status: string | null | undefined): boolean {
 }
 
 function seatsPerVehicle(transport: string): number {
-  return normalizeTourTransport(transport) === "car" ? 6 : 16;
+  return normalizeTourTransport(transport) === "car" ? 6 : 37;
 }
 
 const recentBookings = [
@@ -272,6 +290,7 @@ function ToursTab({ onToursChanged }: { onToursChanged: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [timelineEditorOpen, setTimelineEditorOpen] = useState(false);
   const [editingTour, setEditingTour] = useState<TourRecord | null>(null);
   const [draft, setDraft] = useState<TourDraft>(emptyTourDraft);
 
@@ -301,11 +320,15 @@ function ToursTab({ onToursChanged }: { onToursChanged: () => void }) {
             transport: normalizeTourTransport(tour.transport),
             summary: tour.summary,
             status_tour: tour.status_tour,
+            travel_date: tour.travel_date?.slice(0, 10) ?? "",
+            timeline: tour.timeline?.length
+              ? tour.timeline.map((activity) => ({ time: activity.time ?? "", title: activity.title ?? "" }))
+              : createDefaultTimeline(),
             required_vehicles_count: tour.required_vehicles_count,
             available_slot: tour.available_slot,
             image_url: tour.image_url ?? "",
           }
-        : { ...emptyTourDraft },
+        : { ...emptyTourDraft, timeline: createDefaultTimeline() },
     );
     setEditorOpen(true);
   }
@@ -323,6 +346,10 @@ function ToursTab({ onToursChanged }: { onToursChanged: () => void }) {
       summary: draft.summary,
       rating: 5.0,
       status_tour: draft.status_tour,
+      travel_date: draft.travel_date || null,
+      timeline: draft.timeline
+        .filter((activity) => activity.time.trim() || activity.title.trim())
+        .map((activity) => ({ time: activity.time.trim(), title: activity.title.trim() })),
       required_vehicles_count: draft.required_vehicles_count,
       available_slot: draft.available_slot,
       image_url: draft.image_url.trim() || null,
@@ -459,6 +486,15 @@ function ToursTab({ onToursChanged }: { onToursChanged: () => void }) {
               <Input id="tour-destination" value={draft.destination} onChange={(event) => setDraft({ ...draft, destination: event.target.value })} />
             </div>
             <div className="grid gap-1.5">
+              <Label htmlFor="tour-travel-date">{t("Travel Date")}</Label>
+              <Input
+                id="tour-travel-date"
+                type="date"
+                value={draft.travel_date ?? ""}
+                onChange={(event) => setDraft({ ...draft, travel_date: event.target.value })}
+              />
+            </div>
+            <div className="grid gap-1.5">
               <Label htmlFor="tour-image-url">{t("Image URL or Storage path")}</Label>
               <Input
                 id="tour-image-url"
@@ -540,6 +576,11 @@ function ToursTab({ onToursChanged }: { onToursChanged: () => void }) {
                 <Label htmlFor="tour-slots">{t("Available slots")}</Label>
                 <Input id="tour-slots" type="number" min="0" value={draft.available_slot} onChange={(event) => setDraft({ ...draft, available_slot: Number(event.target.value) || 0 })} />
               </div>
+              <div className="flex items-end">
+                <Button type="button" variant="outline" className="h-10 w-full justify-start" onClick={() => setTimelineEditorOpen(true)}>
+                  <Plus className="size-4" aria-hidden /> {t("Manage Timeline")}
+                </Button>
+              </div>
             </div>
           </div>
           <DialogFooter className="flex-col gap-3 sm:justify-between sm:space-x-0">
@@ -579,6 +620,79 @@ function ToursTab({ onToursChanged }: { onToursChanged: () => void }) {
               </Button>
             </div>
           </DialogFooter>
+          <Dialog open={timelineEditorOpen} onOpenChange={setTimelineEditorOpen}>
+            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Quản lý lịch trình (Timeline)</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-2">
+                <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,2fr)_2.5rem] items-center gap-2">
+                  <Label>Thời gian</Label>
+                  <Label>Hoạt động / Tiêu đề</Label>
+                  <span aria-hidden />
+                </div>
+                {draft.timeline.map((activity, index) => (
+                  <div key={index} className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,2fr)_2.5rem] items-center gap-2">
+                    <Input
+                      type="time"
+                      aria-label={`Thời gian hoạt động ${index + 1}`}
+                      value={activity.time}
+                      onChange={(event) => {
+                        const time = event.target.value;
+                        setDraft((current) => ({
+                          ...current,
+                          timeline: current.timeline.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, time } : item,
+                          ),
+                        }));
+                      }}
+                    />
+                    <Input
+                      type="text"
+                      aria-label={`Hoạt động ${index + 1}`}
+                      placeholder="Hoạt động / Tiêu đề"
+                      value={activity.title}
+                      onChange={(event) => {
+                        const title = event.target.value;
+                        setDraft((current) => ({
+                          ...current,
+                          timeline: current.timeline.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, title } : item,
+                          ),
+                        }));
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Xóa hoạt động ${index + 1}`}
+                      onClick={() => setDraft((current) => ({
+                        ...current,
+                        timeline: current.timeline.filter((_, itemIndex) => itemIndex !== index),
+                      }))}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-2 w-fit"
+                  onClick={() => setDraft((current) => ({
+                    ...current,
+                    timeline: [...current.timeline, { time: "", title: "" }],
+                  }))}
+                >
+                  <Plus className="size-4" aria-hidden /> Thêm hoạt động
+                </Button>
+              </div>
+              <DialogFooter>
+                <Button type="button" onClick={() => setTimelineEditorOpen(false)}>Xong</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </DialogContent>
       </Dialog>
     </>
@@ -586,6 +700,7 @@ function ToursTab({ onToursChanged }: { onToursChanged: () => void }) {
 }
 
 function TransportTab() {
+  const { t } = useLanguage();
   const [vehicles, setVehicles] = useState<VehicleRecord[]>([]);
   const [tourOptions, setTourOptions] = useState<TourOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -598,7 +713,7 @@ function TransportTab() {
     tour_id: "",
     status: "active",
     license_id: "",
-    slots: 16,
+    slots: 37,
     driver_name: "",
     phone_number: "",
   });
@@ -641,7 +756,7 @@ function TransportTab() {
       tour_id: "",
       status: "active",
       license_id: "",
-      slots: 16,
+      slots: 37,
       driver_name: "",
       phone_number: "",
     });
@@ -706,18 +821,18 @@ function TransportTab() {
     <>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-lg font-bold">Phương tiện & nhà cung cấp</h2>
-          <p className="text-sm text-muted-foreground">Quản lý phương tiện, tài xế và tour được phân công.</p>
+          <h2 className="font-display text-lg font-bold">{t("Transport & Providers")}</h2>
+          <p className="text-sm text-muted-foreground">{t("Manage vehicles, drivers and assigned tours.")}</p>
         </div>
         <Button variant="cta" size="sm" onClick={openAddForm}>
-          <Plus className="size-4" aria-hidden /> Thêm xe
+          <Plus className="size-4" aria-hidden /> {t("Add vehicle")}
         </Button>
       </div>
       {error && !editorOpen && <p role="alert" className="mb-4 text-sm text-destructive">{error}</p>}
       {loading ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Đang tải phương tiện...</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("Loading vehicles...")}</p>
       ) : vehicles.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Chưa có phương tiện.</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("No vehicles found.")}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {vehicles.map((vehicle, index) => {
@@ -731,7 +846,7 @@ function TransportTab() {
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="min-w-0 flex-1 font-display text-sm font-bold">{tourName}</h3>
                   <Button variant="ghost" size="sm" onClick={() => openEditForm(vehicle)}>
-                    <Pencil className="size-3.5" aria-hidden /> Sửa
+                    <Pencil className="size-3.5" aria-hidden /> {t("Edit")}
                   </Button>
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-2">
@@ -739,20 +854,20 @@ function TransportTab() {
                     <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                       <Icon className="size-4" aria-hidden />
                     </span>
-                    <p className="text-xs text-muted-foreground">{vehicleType}</p>
+                    <p className="text-xs text-muted-foreground">{t(vehicleType === "Xe khách" ? "Coach / Bus" : "Private Car")}</p>
                   </div>
                   <Badge
                     variant="outline"
                     className={vehicleIsActive ? "shrink-0 border-transparent bg-green-100 text-green-800" : "shrink-0 border-transparent bg-amber-100 text-amber-800"}
                   >
-                    {vehicleStatusLabel(vehicle.status)}
+                    {vehicleStatusLabel(vehicle.status, t)}
                   </Badge>
                 </div>
                 <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                  <dt className="text-muted-foreground">Sức chứa</dt><dd className="text-right font-medium">{vehicle.slots} chỗ</dd>
-                  <dt className="text-muted-foreground">Biển số</dt><dd className="text-right font-medium">{vehicle.license_id}</dd>
-                  <dt className="text-muted-foreground">Tên tài xế</dt><dd className="text-right font-medium">{vehicle.driver_name || "Chưa cập nhật"}</dd>
-                  <dt className="text-muted-foreground">Điện thoại</dt><dd className="text-right font-medium">{vehicle.phone_number || "Chưa cập nhật"}</dd>
+                  <dt className="text-muted-foreground">{t("Capacity")}</dt><dd className="text-right font-medium">{vehicle.slots} {t("seats")}</dd>
+                  <dt className="text-muted-foreground">{t("License plate")}</dt><dd className="text-right font-medium">{vehicle.license_id}</dd>
+                  <dt className="text-muted-foreground">{t("Driver name")}</dt><dd className="text-right font-medium">{vehicle.driver_name || t("Not updated")}</dd>
+                  <dt className="text-muted-foreground">{t("Phone")}</dt><dd className="text-right font-medium">{vehicle.phone_number || t("Not updated")}</dd>
                 </dl>
               </div>
             );
@@ -762,12 +877,12 @@ function TransportTab() {
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingVehicle ? "Chỉnh sửa xe" : "Thêm xe"}</DialogTitle>
+            <DialogTitle>{editingVehicle ? t("Edit vehicle") : t("Add vehicle")}</DialogTitle>
           </DialogHeader>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <div className="grid gap-4 py-2 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="vehicle-type">Loại phương tiện</Label>
+              <Label htmlFor="vehicle-type">{t("Transport type")}</Label>
               <select
                 id="vehicle-type"
                 className="h-10 rounded-md border border-input bg-background px-3 text-sm"
@@ -775,53 +890,53 @@ function TransportTab() {
                 onChange={(event) => setDraft({
                   ...draft,
                   vehicle_type: event.target.value,
-                  slots: event.target.value === "Xe khách" ? 16 : 6,
+                  slots: event.target.value === "Xe khách" ? 37 : 6,
                 })}
               >
-                <option value="Xe khách">Xe khách</option>
-                <option value="Xe riêng">Xe riêng</option>
+                <option value="Xe khách">{t("Coach / Bus")}</option>
+                <option value="Xe riêng">{t("Private Car")}</option>
               </select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="vehicle-tour">Tour</Label>
+              <Label htmlFor="vehicle-tour">{t("Tour")}</Label>
               <select id="vehicle-tour" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={draft.tour_id} onChange={(event) => setDraft({ ...draft, tour_id: event.target.value })}>
-                <option value="">Chọn tour</option>
+                <option value="">{t("Choose a tour")}</option>
                 {tourOptions.map((tour) => <option key={tour.id} value={tour.id}>{tour.tour_name}</option>)}
               </select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="vehicle-status">Trạng thái</Label>
+              <Label htmlFor="vehicle-status">{t("Status")}</Label>
               <select
                 id="vehicle-status"
                 className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                 value={draft.status}
                 onChange={(event) => setDraft({ ...draft, status: event.target.value as VehicleStatus })}
               >
-                <option value="active">Đang hoạt động</option>
-                <option value="inactive">Đang tạm dừng</option>
+                <option value="active">{t("Active")}</option>
+                <option value="inactive">{t("Inactive")}</option>
               </select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="vehicle-license">Biển số</Label>
+              <Label htmlFor="vehicle-license">{t("License plate")}</Label>
               <Input id="vehicle-license" value={draft.license_id} onChange={(event) => setDraft({ ...draft, license_id: event.target.value })} />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="vehicle-slots">Sức chứa (chỗ)</Label>
+              <Label htmlFor="vehicle-slots">{t("Capacity (seats)")}</Label>
               <Input id="vehicle-slots" type="number" min="1" value={draft.slots} onChange={(event) => setDraft({ ...draft, slots: Number(event.target.value) || 0 })} />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="vehicle-driver">Tên tài xế</Label>
+              <Label htmlFor="vehicle-driver">{t("Driver name")}</Label>
               <Input id="vehicle-driver" value={draft.driver_name} onChange={(event) => setDraft({ ...draft, driver_name: event.target.value })} />
             </div>
             <div className="grid gap-1.5 sm:col-span-2">
-              <Label htmlFor="vehicle-phone">Số điện thoại</Label>
+              <Label htmlFor="vehicle-phone">{t("Phone")}</Label>
               <Input id="vehicle-phone" type="tel" value={draft.phone_number} onChange={(event) => setDraft({ ...draft, phone_number: event.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditorOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setEditorOpen(false)}>{t("Cancel")}</Button>
             <Button variant="cta" onClick={saveVehicle} disabled={saving || tourOptions.length === 0}>
-              <Save className="size-4" aria-hidden /> {saving ? "Đang lưu..." : "Lưu xe"}
+              <Save className="size-4" aria-hidden /> {saving ? t("Saving...") : t("Save vehicle")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -832,23 +947,24 @@ function TransportTab() {
 
 function BookingsTab() {
   const { formatPrice } = useCurrency();
+  const { t } = useLanguage();
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h3 className="font-display text-sm font-bold">Recent bookings</h3>
+        <h3 className="font-display text-sm font-bold">{t("Recent bookings")}</h3>
         <Button variant="outline" size="sm">
-          <CalendarDays className="size-4" aria-hidden /> This month
+          <CalendarDays className="size-4" aria-hidden /> {t("This month")}
         </Button>
       </div>
       <table className="w-full text-sm">
         <thead className="bg-secondary/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
-            <th className="px-4 py-3 font-medium">Booking</th>
-            <th className="px-4 py-3 font-medium">Customer</th>
-            <th className="px-4 py-3 font-medium">Tour</th>
-            <th className="px-4 py-3 font-medium">Amount</th>
-            <th className="px-4 py-3 font-medium">Status</th>
+            <th className="px-4 py-3 font-medium">{t("Booking")}</th>
+            <th className="px-4 py-3 font-medium">{t("Customer")}</th>
+            <th className="px-4 py-3 font-medium">{t("Tour")}</th>
+            <th className="px-4 py-3 font-medium">{t("Amount")}</th>
+            <th className="px-4 py-3 font-medium">{t("Status")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -865,7 +981,7 @@ function BookingsTab() {
                     b.status === "Paid" ? "bg-teal/10 text-teal" : b.status === "Pending" ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"
                   }
                 >
-                  {b.status}
+                  {t(b.status)}
                 </Badge>
               </td>
             </tr>
@@ -880,7 +996,7 @@ function UsersTab() {
   type ProfileListItem = Pick<Tables<"profiles">, "id" | "name" | "email" | "role" | "status" | "sdt" | "updated_at">;
   type ProfileDraft = Pick<ProfileListItem, "role" | "status" | "sdt"> & { name: string };
   const { user, profile: currentProfile, loading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [profiles, setProfiles] = useState<ProfileListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1003,44 +1119,44 @@ function UsersTab() {
   }, [authLoading, user]);
 
   const roleLabels: Record<ProfileListItem["role"], string> = {
-    admin: "Quản trị",
-    moderator: "Điều phối viên",
-    guest: "Nhân viên",
+    admin: t("Admin"),
+    moderator: t("Moderator"),
+    guest: t("Staff"),
   };
 
   const statusLabels: Record<string, string> = {
-    active: "Hoạt động",
-    inactive: "Không hoạt động",
-    suspended: "Tạm khóa",
+    active: t("Active"),
+    inactive: t("Inactive"),
+    suspended: t("Suspended"),
   };
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="font-display text-sm font-bold">Staff & roles</h3>
+        <h3 className="font-display text-sm font-bold">{t("Staff & roles")}</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
         <thead className="bg-secondary/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
-            <th className="px-4 py-3 font-medium">Name</th>
-            <th className="px-4 py-3 font-medium">Email</th>
-            <th className="px-4 py-3 font-medium">Phone</th>
-            <th className="px-4 py-3 font-medium">Role</th>
-            <th className="px-4 py-3 font-medium">Status</th>
-            <th className="px-4 py-3 font-medium">Updated</th>
-            <th className="px-4 py-3 text-right font-medium">Thao tác</th>
+            <th className="px-4 py-3 font-medium">{t("Name")}</th>
+            <th className="px-4 py-3 font-medium">{t("Email")}</th>
+            <th className="px-4 py-3 font-medium">{t("Phone")}</th>
+            <th className="px-4 py-3 font-medium">{t("Role")}</th>
+            <th className="px-4 py-3 font-medium">{t("Status")}</th>
+            <th className="px-4 py-3 font-medium">{t("Updated")}</th>
+            <th className="px-4 py-3 text-right font-medium">{t("Actions")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
           {loading && (
             <tr>
-              <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading users...</td>
+              <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("Loading users...")}</td>
             </tr>
           )}
           {!loading && error && (
             <tr>
-              <td colSpan={7} className="px-4 py-8 text-center text-destructive">Unable to load users: {error}</td>
+              <td colSpan={7} className="px-4 py-8 text-center text-destructive">{t("Unable to load users")}: {error}</td>
             </tr>
           )}
           {!authLoading && !user && (
@@ -1050,7 +1166,7 @@ function UsersTab() {
           )}
           {!loading && user && !error && profiles.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No users found.</td>
+              <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("No users found.")}</td>
             </tr>
           )}
           {!loading && !error && profiles.map((profile) => (
@@ -1058,74 +1174,74 @@ function UsersTab() {
               <td className="px-4 py-3 font-medium">
                 {editingId === profile.id && canEditAllFields ? (
                   <Input
-                    aria-label={`Tên của ${profile.name ?? profile.email ?? "nhân viên"}`}
+                    aria-label={`${t("Name of")} ${profile.name ?? profile.email ?? t("Staff")}`}
                     className="w-full"
                     value={draft?.name ?? ""}
                     onChange={(event) => setDraft((currentDraft) => currentDraft ? { ...currentDraft, name: event.target.value } : currentDraft)}
                   />
-                ) : profile.name ?? "Chưa cập nhật"}
+                ) : profile.name ?? t("Not updated")}
               </td>
-              <td className="px-4 py-3 text-muted-foreground">{profile.email ?? "Chưa cập nhật"}</td>
+              <td className="px-4 py-3 text-muted-foreground">{profile.email ?? t("Not updated")}</td>
               <td className="px-4 py-3 text-muted-foreground">
                 {editingId === profile.id ? (
                   <input
-                    aria-label={`Số điện thoại của ${profile.name ?? profile.email ?? "nhân viên"}`}
+                    aria-label={`${t("Phone of")} ${profile.name ?? profile.email ?? t("Staff")}`}
                     className="w-full rounded-md border border-input bg-background px-2 py-1"
                     value={draft?.sdt ?? ""}
                     onChange={(event) => setDraft((currentDraft) => currentDraft ? { ...currentDraft, sdt: event.target.value } : currentDraft)}
                   />
-                ) : profile.sdt ?? "Chưa cập nhật"}
+                ) : profile.sdt ?? t("Not updated")}
               </td>
               <td className="px-4 py-3">
                 {editingId === profile.id && canEditRole() ? (
                   <select
-                    aria-label={`Vai trò của ${profile.name ?? profile.email ?? "nhân viên"}`}
+                    aria-label={`${t("Role of")} ${profile.name ?? profile.email ?? t("Staff")}`}
                     className="rounded-md border border-input bg-background px-2 py-1"
                     value={draft?.role ?? profile.role}
                     onChange={(event) => setDraft((currentDraft) => currentDraft ? { ...currentDraft, role: event.target.value as ProfileListItem["role"] } : currentDraft)}
                   >
-                    <option value="admin">Quản trị</option>
-                    <option value="moderator">Điều phối viên</option>
-                    <option value="guest">Nhân viên</option>
+                    <option value="admin">{t("Admin")}</option>
+                    <option value="moderator">{t("Moderator")}</option>
+                    <option value="guest">{t("Staff")}</option>
                   </select>
                 ) : (
                   <Badge variant="outline" className="gap-1">
-                    <Users className="size-3.5" aria-hidden /> {roleLabels[profile.role] ?? "Chưa cập nhật"}
+                    <Users className="size-3.5" aria-hidden /> {roleLabels[profile.role] ?? t("Not updated")}
                   </Badge>
                 )}
               </td>
               <td className="px-4 py-3">
                 {editingId === profile.id && canEditStatus ? (
                   <select
-                    aria-label={`Trạng thái của ${profile.name ?? profile.email ?? "nhân viên"}`}
+                    aria-label={`${t("Status of")} ${profile.name ?? profile.email ?? t("Staff")}`}
                     className="rounded-md border border-input bg-background px-2 py-1"
                     value={draft?.status ?? profile.status}
                     onChange={(event) => setDraft((currentDraft) => currentDraft ? { ...currentDraft, status: event.target.value } : currentDraft)}
                   >
-                    <option value="active">Hoạt động</option>
-                    <option value="inactive">Không hoạt động</option>
-                    <option value="suspended">Tạm khóa</option>
+                    <option value="active">{t("Active")}</option>
+                    <option value="inactive">{t("Inactive")}</option>
+                    <option value="suspended">{t("Suspended")}</option>
                   </select>
                 ) : (
                   <Badge variant="outline" className={profile.status === "active" ? "bg-teal/10 text-teal" : "bg-destructive/10 text-destructive"}>
-                    {statusLabels[profile.status] ?? (profile.status || "Chưa cập nhật")}
+                    {statusLabels[profile.status] ?? (profile.status || t("Not updated"))}
                   </Badge>
                 )}
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                {new Date(profile.updated_at).toLocaleString("vi-VN")}
+                {new Date(profile.updated_at).toLocaleString(language === "vi" ? "vi-VN" : "en-US")}
               </td>
               <td className="px-4 py-3 text-right">
                 {editingId === profile.id ? (
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={cancelEditing}>Hủy</Button>
+                    <Button variant="ghost" size="sm" onClick={cancelEditing}>{t("Cancel")}</Button>
                     <Button size="sm" disabled={saving} onClick={() => void saveProfile(profile)}>
-                      <Save className="size-4" aria-hidden /> Lưu
+                      <Save className="size-4" aria-hidden /> {t("Save")}
                     </Button>
                   </div>
                 ) : canEditProfile(profile) ? (
                   <Button variant="ghost" size="sm" onClick={() => startEditing(profile)}>
-                    <Pencil className="size-4" aria-hidden /> Sửa
+                    <Pencil className="size-4" aria-hidden /> {t("Edit")}
                   </Button>
                 ) : null}
               </td>
