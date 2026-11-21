@@ -21,11 +21,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useLanguage } from "@/lib/language";
 import { closeTicketOrder, confirmTicketPayment } from "@/lib/payments.functions";
+import { TICKET_HOLD_DURATION_MS } from "@/lib/ticket-hold";
 import vnpayLogo from "@/assets/payments/vnpay.png";
 import momoLogo from "@/assets/payments/momo.png";
 import paypalLogo from "@/assets/payments/paypal.png";
-
-const HOLD_DURATION_MS = 10 * 60 * 1000;
 
 type Ticket = {
   id: string;
@@ -224,7 +223,7 @@ function CheckoutPage() {
         const createdAt = Math.min(
           ...loadedTickets.map((item) => new Date(item.created_at).getTime()),
         );
-        if (!Number.isFinite(createdAt) || createdAt + HOLD_DURATION_MS <= Date.now()) {
+        if (!Number.isFinite(createdAt) || createdAt + TICKET_HOLD_DURATION_MS <= Date.now()) {
           const result = await transitionTicket(currentOrderId, "expired");
           if (active && result === "expired") {
             toast.error(t("Hold expired"));
@@ -295,7 +294,8 @@ function CheckoutPage() {
   useEffect(() => {
     if (!ticket || ticket.ticket_status !== "pending") return;
     const expiresAt =
-      Math.min(...tickets.map((item) => new Date(item.created_at).getTime())) + HOLD_DURATION_MS;
+      Math.min(...tickets.map((item) => new Date(item.created_at).getTime())) +
+      TICKET_HOLD_DURATION_MS;
     const updateRemaining = () => {
       const secondsLeft = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
       setRemaining(secondsLeft);
@@ -319,7 +319,8 @@ function CheckoutPage() {
 
     const selectedPaymentMethod = method;
     const expiresAt =
-      Math.min(...tickets.map((item) => new Date(item.created_at).getTime())) + HOLD_DURATION_MS;
+      Math.min(...tickets.map((item) => new Date(item.created_at).getTime())) +
+      TICKET_HOLD_DURATION_MS;
     if (Date.now() >= expiresAt) {
       void finishTicket("expired");
       return;

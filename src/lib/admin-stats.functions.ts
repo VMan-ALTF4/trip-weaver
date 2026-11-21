@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { TICKET_HOLD_DURATION_MS } from "@/lib/ticket-hold";
 
 type DatabaseResult = {
   data: unknown;
@@ -9,6 +10,24 @@ type DatabaseResult = {
 
 interface AdminStatsDatabase {
   rpc(functionName: "get_admin_ticket_stats"): PromiseLike<DatabaseResult>;
+}
+
+type AdminCountResult = {
+  count: number | null;
+  error: { message: string } | null;
+};
+
+interface AdminCountQuery extends PromiseLike<AdminCountResult> {
+  eq(column: string, value: string): AdminCountQuery;
+  gt(column: string, value: string): AdminCountQuery;
+}
+
+interface AdminCountTable {
+  select(column: "id", options: { count: "exact"; head: true }): AdminCountQuery;
+}
+
+interface AdminSystemStatusDatabase {
+  from(table: "ticket" | "eticket_email_log"): AdminCountTable;
 }
 
 export type AdminRecentBooking = {
@@ -27,6 +46,12 @@ export type AdminTicketStats = {
   current30DayRevenue: number;
   previous30DayRevenue: number;
   recentBookings: AdminRecentBooking[];
+};
+
+export type AdminSystemStatus = {
+  activeHeldTicketCount: number;
+  emailsSent30DayCount: number;
+  emailsFailed30DayCount: number;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -133,4 +158,72 @@ export const getAdminTicketStats = createServerFn({ method: "POST" })
       throw new Error("Ticket statistics could not be loaded.");
     }
     return stats;
+  });
+
+export const getAdminSystemStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({}))
+  .handler(async ({ context }): Promise<AdminSystemStatus> => {
+    const { data: profile, error: profileError } = await context.supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error("[admin-stats] Unable to verify the current user's role.", profileError);
+      throw new Error("Admin access could not be verified.");
+    }
+    if (profile?.role !== "admin") {
+      throw new Error("Admin access required.");
+    }
+
+    const countFromResult = (result: AdminCountResult, metric: string) => {
+      if (result.error) {
+        console.error(`[admin-stats] Unable to load ${metric}.`, result.error);
+        throw new Error("System status could not be loaded.");
+      }
+      if (result.count === null || !Number.isSafeInteger(result.count) || result.count < 0) {
+        console.error(`[admin-stats] The ${metric} aggregate response was invalid.`, result.count);
+        throw new Error("System status could not be loaded.");
+      }
+      return result.count;
+    };
+
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const database = supabaseAdmin as unknown as AdminSystemStatusDatabase;
+      const now = Date.now();
+      const heldSince = new Date(now - TICKET_HOLD_DURATION_MS).toISOString();
+      const emailSince = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const [heldTickets, sentEmails, failedEmails] = await Promise.all([
+        database
+          .from("ticket")
+          .select("id", { count: "exact", head: true })
+          .eq("ticket_status", "pending")
+          .gt("created_at", heldSince),
+        database
+          .from("eticket_email_log")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "sent")
+          .gt("created_at", emailSince),
+        database
+          .from("eticket_email_log")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "failed")
+          .gt("created_at", emailSince),
+      ]);
+
+      return {
+        activeHeldTicketCount: countFromResult(heldTickets, "active held tickets"),
+        emailsSent30DayCount: countFromResult(sentEmails, "sent e-ticket email count"),
+        emailsFailed30DayCount: countFromResult(failedEmails, "failed e-ticket email count"),
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message === "System status could not be loaded.") {
+        throw error;
+      }
+      console.error("[admin-stats] Admin system status request failed.", error);
+      throw new Error("System status could not be loaded.");
+    }
   });

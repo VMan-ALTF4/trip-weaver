@@ -189,7 +189,6 @@ function TourDetailPage() {
     user,
     openProfileEditor,
     refreshAuthProfile,
-    profileEditorOpen,
   } = useAuth();
 
   const [step, setStep] = useState(1);
@@ -254,16 +253,12 @@ function TourDetailPage() {
       resumeCheckoutAfterProfile.current = false;
       window.sessionStorage.removeItem(PENDING_CHECKOUT_INTENT_KEY);
       void goCheckoutRef.current();
-    } else if (!profileEditorOpen) {
-      openProfileEditor({ requirePhone: true });
     }
   }, [
     authLoading,
     booking,
     checkoutIntentReady,
-    openProfileEditor,
     profile?.sdt,
-    profileEditorOpen,
     profileLoading,
     tourId,
     user,

@@ -1,13 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+  Activity,
   Bus,
   CalendarDays,
   DollarSign,
   LayoutDashboard,
   Pencil,
   Save,
-  Settings,
   Ticket,
   TrainFront,
   Users,
@@ -29,10 +29,13 @@ import { isTravelDateNotPassed } from "@/lib/tour-dates";
 import { getTourImageUrl } from "@/lib/tour-images";
 import { useLanguage } from "@/lib/language";
 import fallbackTourImage from "@/assets/hero-coast.jpg";
-import { useCurrency } from "@/lib/currency";
+import { USD_TO_VND_RATE, useCurrency } from "@/lib/currency";
+import { SITE_CONTACT } from "@/lib/site-contact";
 import {
   getAdminTicketStats,
+  getAdminSystemStatus,
   type AdminRecentBooking,
+  type AdminSystemStatus,
   type AdminTicketStats,
 } from "@/lib/admin-stats.functions";
 import { Input } from "@/components/ui/input";
@@ -40,6 +43,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -219,6 +223,10 @@ function AdminPage() {
 
 function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("Tours & Catalog");
+  const [systemStatusOpen, setSystemStatusOpen] = useState(false);
+  const [systemStatus, setSystemStatus] = useState<AdminSystemStatus | null>(null);
+  const [systemStatusLoading, setSystemStatusLoading] = useState(false);
+  const [systemStatusFailed, setSystemStatusFailed] = useState(false);
   const [activeTourCount, setActiveTourCount] = useState<number | null>(null);
   const [tourStatsRevision, setTourStatsRevision] = useState(0);
   const [ticketStats, setTicketStats] = useState<AdminTicketStats | null>(null);
@@ -226,6 +234,29 @@ function AdminDashboard() {
   const [ticketStatsFailed, setTicketStatsFailed] = useState(false);
   const { t: translate } = useLanguage();
   const { formatPrice } = useCurrency();
+
+  useEffect(() => {
+    if (!systemStatusOpen) return;
+    let cancelled = false;
+    setSystemStatus(null);
+    setSystemStatusFailed(false);
+    setSystemStatusLoading(true);
+
+    void getAdminSystemStatus({ data: {} })
+      .then((status) => {
+        if (!cancelled) setSystemStatus(status);
+      })
+      .catch(() => {
+        if (!cancelled) setSystemStatusFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setSystemStatusLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [systemStatusOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -304,10 +335,88 @@ function AdminDashboard() {
             <h1 className="truncate font-display text-2xl font-extrabold sm:text-3xl">{translate("Admin dashboard")}</h1>
             <p className="text-sm text-muted-foreground">{translate("Tours, transport, bookings and staff in one place.")}</p>
           </div>
-          <Button variant="outline" size="sm" className="shrink-0">
-            <Settings className="size-4" aria-hidden /> {translate("Settings")}
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => setSystemStatusOpen(true)}
+          >
+            <Activity className="size-4" aria-hidden /> {translate("System status")}
           </Button>
         </div>
+
+        <Dialog open={systemStatusOpen} onOpenChange={setSystemStatusOpen}>
+          <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{translate("System status")}</DialogTitle>
+              <DialogDescription>{translate("System status is read-only.")}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-5">
+              <section>
+                <h3 className="text-sm font-semibold">{translate("Current held tickets")}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {translate("Tickets held for up to 10 minutes")}
+                </p>
+                <p className="mt-2 text-2xl font-bold">
+                  {systemStatusLoading || systemStatusFailed || !systemStatus
+                    ? "—"
+                    : systemStatus.activeHeldTicketCount}
+                </p>
+              </section>
+              <section className="border-t border-border pt-4">
+                <h3 className="text-sm font-semibold">
+                  {translate("E-ticket emails (last 30 days)")}
+                </h3>
+                <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                  <p>
+                    <span className="text-muted-foreground">{translate("Sent")}:</span>{" "}
+                    <span className="font-semibold">
+                      {systemStatusLoading || systemStatusFailed || !systemStatus
+                        ? "—"
+                        : systemStatus.emailsSent30DayCount}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">{translate("Failed")}:</span>{" "}
+                    <span className="font-semibold">
+                      {systemStatusLoading || systemStatusFailed || !systemStatus
+                        ? "—"
+                        : systemStatus.emailsFailed30DayCount}
+                    </span>
+                  </p>
+                </div>
+              </section>
+              <section className="border-t border-border pt-4">
+                <h3 className="text-sm font-semibold">
+                  {translate("Applied configuration")}
+                </h3>
+                <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-muted-foreground">
+                      {translate("USD to VND exchange rate")}
+                    </dt>
+                    <dd className="mt-0.5 font-medium">
+                      1 USD = {USD_TO_VND_RATE.toLocaleString("en-US")} VND
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">{translate("Contact hotline")}</dt>
+                    <dd className="mt-0.5 font-medium">{SITE_CONTACT.hotlineDisplay}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-muted-foreground">{translate("Contact email")}</dt>
+                    <dd className="mt-0.5 break-all font-medium">{SITE_CONTACT.email}</dd>
+                  </div>
+                </dl>
+              </section>
+            </div>
+            {systemStatusFailed && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {translate("Unable to load system status.")}
+              </p>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Stats */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

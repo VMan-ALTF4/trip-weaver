@@ -3,9 +3,10 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 export type Currency = "USD" | "VND";
 
 const STORAGE_KEY = "tat-currency";
+export const USD_TO_VND_RATE = 25_000;
 const rates: Record<Currency, number> = {
   USD: 1,
-  VND: 25_000,
+  VND: USD_TO_VND_RATE,
 };
 const locales: Record<Currency, string> = {
   USD: "en-US",
