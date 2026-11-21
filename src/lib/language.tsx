@@ -4,31 +4,35 @@ export type Language = "en" | "vi";
 const STORAGE_KEY = "tat-language";
 
 const vi: Record<string, string> = {
-  "Tours": "Tour",
-  "Destinations": "Điểm đến",
-  "Attractions": "Điểm tham quan",
-  "Admin": "Quản trị",
+  Tours: "Tour",
+  Destinations: "Điểm đến",
+  Attractions: "Điểm tham quan",
+  Admin: "Quản trị",
   "My Bookings": "Đặt chỗ của tôi",
   "My bookings": "Đặt chỗ của tôi",
+  "Your ticket reservations and payment status.":
+    "Thông tin đặt vé và trạng thái thanh toán của bạn.",
   "Admin dashboard": "Trang quản trị",
   "Log in": "Đăng nhập",
-  "Register": "Đăng ký",
+  Register: "Đăng ký",
   "Register with Email": "Đăng ký bằng email",
   "Sign out": "Đăng xuất",
   "Signed out": "Đã đăng xuất",
   "Signed in": "Đã đăng nhập",
   "Signed in as": "Đã đăng nhập với tên",
-  "Menu": "Menu",
-  "Close": "Đóng",
+  Menu: "Menu",
+  Close: "Đóng",
   "Open menu": "Mở menu",
   "TAT Booking": "TAT Booking",
-  "Transport + attraction combo e-tickets, one booking.": "Vé điện tử kết hợp di chuyển và tham quan trong một lần đặt.",
-  "Checkout": "Thanh toán",
+  "Transport + attraction combo e-tickets, one booking.":
+    "Vé điện tử kết hợp di chuyển và tham quan trong một lần đặt.",
+  Checkout: "Thanh toán",
   "Transport + attraction, one QR code": "Di chuyển + tham quan, chỉ một mã QR",
   "Explore Destinations, Book Transport &": "Khám phá điểm đến, đặt phương tiện &",
   "Attraction Tickets": "Vé tham quan",
   "in One Unified Trip": "trong cùng một hành trình",
-  "Pick your seat, choose a pickup point along the route and get every venue entry bundled into a single combo e-ticket.": "Chọn chỗ ngồi, điểm đón trên tuyến và nhận toàn bộ vé vào cửa trong một vé điện tử combo duy nhất.",
+  "Pick your seat, choose a pickup point along the route and get every venue entry bundled into a single combo e-ticket.":
+    "Chọn chỗ ngồi, điểm đón trên tuyến và nhận toàn bộ vé vào cửa trong một vé điện tử combo duy nhất.",
   "Destination / Tour location": "Điểm đến / Địa điểm tour",
   "Search a destination or tour": "Nhập địa điểm hoặc tên tour",
   "Search tours": "Tìm tour",
@@ -42,26 +46,35 @@ const vi: Record<string, string> = {
   "Passengers & tickets": "Hành khách & vé",
   "Bus / Coach": "Xe khách",
   "Coach / Bus": "Xe khách",
-  "Train": "Tàu hỏa",
+  Car: "Xe ô tô",
+  Train: "Tàu hỏa",
   "Private Car": "Xe riêng",
   "All transport types": "Tùy ý",
-  "Free cancellation up to 24h before departure on most combos.": "Hầu hết combo được hủy miễn phí trước giờ khởi hành 24 giờ.",
+  "Free cancellation up to 24h before departure on most combos.":
+    "Hầu hết combo được hủy miễn phí trước giờ khởi hành 24 giờ.",
   "Search Tours & Combos": "Tìm tour & combo",
   "Search tours and combos": "Tìm tour và combo",
   "Featured tours & popular combos": "Tour nổi bật & combo phổ biến",
-  "Hand-picked routes where transport and venue entry come bundled.": "Các hành trình chọn lọc đã bao gồm phương tiện và vé vào cửa.",
+  "Hand-picked routes where transport and venue entry come bundled.":
+    "Các hành trình chọn lọc đã bao gồm phương tiện và vé vào cửa.",
+  All: "Tất cả",
   "View all": "Xem tất cả",
   "Why travellers book with TAT": "Vì sao du khách chọn TAT",
   "Combo e-tickets": "Vé điện tử combo",
-  "One QR code covers your coach boarding and every attraction entry on the itinerary.": "Một mã QR dùng để lên xe và vào tất cả điểm tham quan trong lịch trình.",
+  "One QR code covers your coach boarding and every attraction entry on the itinerary.":
+    "Một mã QR dùng để lên xe và vào tất cả điểm tham quan trong lịch trình.",
   "Interactive route maps": "Bản đồ hành trình tương tác",
-  "See pickup points, stopovers and attraction stops before you commit.": "Xem trước điểm đón, điểm dừng và điểm tham quan trước khi đặt.",
+  "See pickup points, stopovers and attraction stops before you commit.":
+    "Xem trước điểm đón, điểm dừng và điểm tham quan trước khi đặt.",
   "Real-time seat locking": "Giữ chỗ theo thời gian thực",
-  "Your exact seat is held for 10 minutes while you complete checkout.": "Chỗ ngồi được giữ trong 10 phút để bạn hoàn tất thanh toán.",
+  "Your exact seat is held for 10 minutes while you complete checkout.":
+    "Chỗ ngồi được giữ trong 10 phút để bạn hoàn tất thanh toán.",
   "100% transparent costs": "Chi phí minh bạch 100%",
-  "Itemised pricing with taxes and pickup fees shown before payment.": "Giá chi tiết, thuế và phí đón được hiển thị trước khi thanh toán.",
+  "Itemised pricing with taxes and pickup fees shown before payment.":
+    "Giá chi tiết, thuế và phí đón được hiển thị trước khi thanh toán.",
   "Plan the whole trip in under two minutes": "Lên kế hoạch cả chuyến đi chưa đầy hai phút",
-  "Choose a route, lock your seat, add venue tickets and pay with VNPay, Momo, card or bank QR.": "Chọn hành trình, giữ chỗ, thêm vé tham quan và thanh toán qua VNPay, Momo, thẻ hoặc QR ngân hàng.",
+  "Choose a route, lock your seat, add venue tickets and pay with VNPay, Momo, card or bank QR.":
+    "Chọn hành trình, giữ chỗ, thêm vé tham quan và thanh toán qua VNPay, Momo, thẻ hoặc QR ngân hàng.",
   "Browse routes": "Xem hành trình",
   "See a sample e-ticket": "Xem vé điện tử mẫu",
   "Tours & route maps": "Tour & bản đồ hành trình",
@@ -69,56 +82,184 @@ const vi: Record<string, string> = {
   "Maximum price": "Giá tối đa",
   "Attraction categories": "Danh mục điểm tham quan",
   "Pickup preference": "Điểm đón mong muốn",
-  "Filters": "Bộ lọc",
+  Filters: "Bộ lọc",
   "Map view": "Xem bản đồ",
-  "List": "Danh sách",
-  "No tours match these filters yet. Try widening the price range.": "Chưa có tour phù hợp. Hãy thử tăng khoảng giá.",
-  "Filter tours by price, transport type, attraction category and pickup point, and follow every route on an interactive map.": "Lọc tour theo giá, phương tiện, loại điểm tham quan và điểm đón, đồng thời theo dõi từng hành trình trên bản đồ tương tác.",
-  "Split-screen tour list and interactive route map with pickup points and attraction stops.": "Danh sách tour và bản đồ hành trình tương tác hiển thị điểm đón cùng các điểm tham quan.",
-  "Nature": "Thiên nhiên", "Culture": "Văn hóa", "Beach": "Biển", "Adventure": "Phiêu lưu", "Heritage": "Di sản", "Food": "Ẩm thực",
-  "City Center": "Trung tâm thành phố", "Central Station": "Ga trung tâm", "North Terminal": "Bến phía Bắc", "Beach Resorts": "Khu nghỉ dưỡng biển", "Airport Road": "Đường sân bay",
+  List: "Danh sách",
+  "No tours match these filters yet. Try widening the price range.":
+    "Chưa có tour phù hợp. Hãy thử tăng khoảng giá.",
+  "Filter tours by price, transport type, attraction category and pickup point, and follow every route on an interactive map.":
+    "Lọc tour theo giá, phương tiện, loại điểm tham quan và điểm đón, đồng thời theo dõi từng hành trình trên bản đồ tương tác.",
+  "Split-screen tour list and interactive route map with pickup points and attraction stops.":
+    "Danh sách tour và bản đồ hành trình tương tác hiển thị điểm đón cùng các điểm tham quan.",
+  Nature: "Thiên nhiên",
+  Culture: "Văn hóa",
+  Beach: "Biển",
+  Adventure: "Phiêu lưu",
+  Heritage: "Di sản",
+  Food: "Ẩm thực",
+  "City Center": "Trung tâm thành phố",
+  "Central Station": "Ga trung tâm",
+  "North Terminal": "Bến phía Bắc",
+  "Beach Resorts": "Khu nghỉ dưỡng biển",
+  "Airport Road": "Đường sân bay",
   "Combo E-Ticket Included": "Đã gồm vé điện tử combo",
   "Combo E-Ticket": "Vé điện tử combo",
   "Back to tours": "Quay lại danh sách tour",
   "Itinerary timeline": "Lịch trình chi tiết",
   "View itinerary timeline": "Xem lịch trình chi tiết",
   "No itinerary available.": "Chưa có lịch trình.",
-  "Included": "Đã bao gồm",
+  Included: "Đã bao gồm",
   "Not included": "Không bao gồm",
   "per person": "mỗi người",
-  "Date": "Ngày", "Seats": "Chỗ ngồi", "Pickup": "Điểm đón", "Add-ons": "Dịch vụ thêm",
-  "Travel date": "Ngày khởi hành", "Passengers": "Hành khách", "Choose seats": "Chọn chỗ ngồi",
+  Date: "Ngày",
+  Seats: "Chỗ ngồi",
+  Pickup: "Điểm đón",
+  "Add-ons": "Dịch vụ thêm",
+  "Travel date": "Ngày khởi hành",
+  Passengers: "Hành khách",
+  "Choose seats": "Chọn chỗ ngồi",
+  "Choose pickup point": "Chọn điểm đón",
   "Front of coach": "Đầu xe",
-  "Selected": "Đã chọn", "Taken": "Đã có người", "Free": "Miễn phí", "Back": "Quay lại", "Continue": "Tiếp tục",
+  Selected: "Đã chọn",
+  Taken: "Đã có người",
+  Free: "Miễn phí",
+  Back: "Quay lại",
+  Continue: "Tiếp tục",
   "Pickup point": "Điểm đón",
-  "Your seat is held for 10 minutes once you reach checkout.": "Chỗ ngồi sẽ được giữ 10 phút khi bạn đến bước thanh toán.",
+  Vehicle: "Phương tiện",
+  "Please enter the pickup address before continuing.":
+    "Vui lòng nhập địa chỉ đón khách trước khi tiếp tục.",
+  "Your seat is held for 10 minutes once you reach checkout.":
+    "Chỗ ngồi sẽ được giữ 10 phút khi bạn đến bước thanh toán.",
   "Attraction add-ons (per person)": "Dịch vụ tham quan thêm (mỗi người)",
-  "Pickup fee": "Phí đón", "Subtotal": "Tạm tính", "Go to checkout": "Tiến hành thanh toán",
+  "Pickup fee": "Phí đón",
+  Subtotal: "Tạm tính",
+  "Go to checkout": "Tiến hành thanh toán",
   "Order review & checkout": "Kiểm tra đơn & thanh toán",
-  "Review your combo booking and pay with VNPay, Momo, card or bank QR.": "Kiểm tra đơn combo và thanh toán qua VNPay, Momo, thẻ hoặc QR ngân hàng.",
+  "Review your combo booking and pay with VNPay, Momo, card or bank QR.":
+    "Kiểm tra đơn combo và thanh toán qua VNPay, Momo, thẻ hoặc QR ngân hàng.",
   "Seat lock expired": "Thời gian giữ chỗ đã hết",
   "Seat held for": "Giữ chỗ trong",
   "Please go back and reselect your seats.": "Vui lòng quay lại và chọn chỗ ngồi lần nữa.",
-  "Complete checkout before the timer runs out.": "Hãy hoàn tất thanh toán trước khi hết thời gian.",
+  "Complete checkout before the timer runs out.":
+    "Hãy hoàn tất thanh toán trước khi hết thời gian.",
   "Lead passenger details": "Thông tin hành khách đại diện",
-  "Full name": "Họ và tên", "Email": "Email", "Phone": "Số điện thoại",
-  "Edit profile": "Chỉnh sửa thông tin cá nhân", "Phone number": "Số điện thoại",
-  "Current email": "Email hiện tại", "New email": "Email mới",
-  "Update your personal details and manage your sign-in email.": "Cập nhật thông tin cá nhân và quản lý email đăng nhập.",
-  "Name is required.": "Vui lòng nhập họ tên.", "Profile updated.": "Đã cập nhật thông tin cá nhân.",
+  "Full name": "Họ và tên",
+  Email: "Email",
+  Phone: "Số điện thoại",
+  "Edit profile": "Chỉnh sửa thông tin cá nhân",
+  "Phone number": "Số điện thoại",
+  "Verified email": "Email đã xác minh",
+  "Please add a phone number and verify your email before payment.":
+    "Vui lòng bổ sung số điện thoại và xác minh email trước khi thanh toán.",
+  "Phone number is required to continue to payment.":
+    "Vui lòng nhập số điện thoại để tiếp tục thanh toán.",
+  "Enter a valid phone number. Use a valid Vietnamese mobile prefix or international E.164 format.":
+    "Vui lòng nhập số điện thoại hợp lệ. Số Việt Nam cần đúng đầu số di động hoặc dùng định dạng E.164 quốc tế.",
+  "A new email verification is pending. Open your inbox and click the link.":
+    "Đang chờ xác minh email mới, hãy mở hộp thư và bấm liên kết.",
+  "Resend confirmation": "Gửi lại xác nhận",
+  "Phone number saved. Verify your email to continue.":
+    "Đã lưu số điện thoại. Vui lòng xác minh email để tiếp tục.",
+  "Complete profile": "Hoàn thiện hồ sơ",
+  "Current email": "Email hiện tại",
+  "New email": "Email mới",
+  "Update your personal details and manage your sign-in email.":
+    "Cập nhật thông tin cá nhân và quản lý email đăng nhập.",
+  "Name is required.": "Vui lòng nhập họ tên.",
+  "Profile updated.": "Đã cập nhật thông tin cá nhân.",
   "Unable to update profile.": "Không thể cập nhật thông tin cá nhân.",
   "Unable to request an email change.": "Không thể gửi yêu cầu đổi email.",
-  "Enter an email address different from your current one.": "Vui lòng nhập địa chỉ email khác với email hiện tại.",
-  "Supabase sent a confirmation link. Your email changes only after verification.": "Supabase đã gửi liên kết xác nhận. Email chỉ thay đổi sau khi bạn xác minh.",
-  "Send confirmation": "Gửi xác nhận", "Sending...": "Đang gửi...",
+  "Enter an email address different from your current one.":
+    "Vui lòng nhập địa chỉ email khác với email hiện tại.",
+  "Supabase sent a confirmation link. Your email changes only after verification.":
+    "Supabase đã gửi liên kết xác nhận. Email chỉ thay đổi sau khi bạn xác minh.",
+  "Send confirmation": "Gửi xác nhận",
+  "Sending...": "Đang gửi...",
   "Payment method": "Phương thức thanh toán",
-  "Credit / Debit Card": "Thẻ tín dụng / ghi nợ", "Bank Transfer QR": "Chuyển khoản QR",
+  "Credit / Debit Card": "Thẻ tín dụng / ghi nợ",
+  "Bank Transfer": "Chuyển khoản ngân hàng",
+  "Mock bank-transfer QR payment": "Mô phỏng thanh toán QR chuyển khoản",
+  "Bank Transfer QR": "Chuyển khoản QR",
+  Paypal: "Paypal",
+  VNPay: "VNPay",
+  Momo: "Momo",
   "Payments are encrypted and processed securely.": "Thanh toán được mã hóa và xử lý an toàn.",
   "Booking summary": "Tóm tắt đặt chỗ",
-  "Vehicle ticket": "Vé phương tiện", "Taxes & fees (8%)": "Thuế & phí (8%)", "Total payable": "Tổng thanh toán",
+  "View e-ticket": "Xem vé điện tử",
+  "Complete payment": "Hoàn tất thanh toán",
+  "View QR code": "Xem mã QR",
+  "Ticket QR code": "Mã QR vé",
+  "E-ticket QR code": "Mã QR vé điện tử",
+  "Use this e-ticket QR code to board your vehicle and enter attractions.":
+    "Mã QR vé điện tử dùng để lên phương tiện và vào điểm tham quan.",
+  "Click to enlarge": "Nhấp để phóng to",
+  "Click to enlarge QR code": "Bấm để phóng to mã QR",
+  "E-ticket details": "Chi tiết vé điện tử",
+  "Ticket code": "Mã vé",
+  Seat: "Chỗ ngồi",
+  "Vehicle ticket": "Vé phương tiện",
+  "Taxes & fees (8%)": "Thuế & phí (8%)",
+  "Total payable": "Tổng thanh toán",
+  Total: "Tổng cộng",
+  Pay: "Thanh toán",
+  "Cancel booking": "Hủy đặt vé",
+  "Processing...": "Đang xử lý...",
+  "Loading checkout": "Đang tải trang thanh toán",
+  "Hold expired": "Hết thời gian giữ vé",
+  "Ticket held for": "Thời gian giữ vé còn",
+  "This ticket is being released.": "Vé này đang được hủy giữ chỗ.",
+  "Complete payment before the timer ends.": "Hoàn tất thanh toán trước khi hết thời gian.",
+  "Booking details": "Chi tiết đặt vé",
+  "Ticket quantity": "Số lượng vé",
+  "Pickup location": "Điểm đón",
+  "Ticket status": "Trạng thái vé",
+  "Not specified": "Chưa xác định",
+  "Demo payment only. No real payment is collected or sent to a payment provider.":
+    "Chỉ là thanh toán thử nghiệm. Không có khoản thanh toán thực tế nào được thu hoặc gửi đến cổng thanh toán.",
+  "Ticket hold cancelled.": "Đã hủy giữ vé.",
+  "This demo payment was already confirmed for this booking.":
+    "Khoản thanh toán thử nghiệm này đã được xác nhận trước đó.",
+  "Demo payment confirmed. Your booking is marked as paid.":
+    "Xác nhận thanh toán thử nghiệm thành công. Đơn đặt vé của bạn đã chuyển sang trạng thái đã thanh toán.",
+  "Payment is confirmed. Ticket issuance is pending.":
+    "Đã xác nhận thanh toán. Đang chờ phát hành vé.",
+  "Payment could not be completed.": "Không thể hoàn tất thanh toán.",
+  "Payment could not be confirmed. Please try again or contact support.":
+    "Không thể xác nhận thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+  "The payment service returned an invalid response.":
+    "Dịch vụ thanh toán trả về phản hồi không hợp lệ.",
+  "This booking could not be found.": "Không tìm thấy đơn đặt này.",
+  "You are not allowed to pay for this booking.":
+    "Bạn không có quyền thanh toán cho đơn đặt này.",
+  "The tickets have different statuses or do not belong to one order.":
+    "Các vé có trạng thái khác nhau hoặc không thuộc cùng một đơn hàng.",
+  "Please sign in again to access this booking.":
+    "Vui lòng đăng nhập lại để truy cập đơn đặt này.",
+  "The checkout link is missing its ticket ID.":
+    "Liên kết thanh toán bị thiếu mã vé.",
+  "One or more tickets are no longer available.":
+    "Một hoặc nhiều vé không còn khả dụng.",
+  "One or more tickets are no longer awaiting payment.":
+    "Một hoặc nhiều vé không còn ở trạng thái chờ thanh toán.",
+  "Unable to load this booking.": "Không thể tải thông tin đặt vé này.",
+  "Unable to cancel your ticket. It will expire automatically.":
+    "Không thể hủy vé của bạn. Vé sẽ tự động hết hạn.",
+  "The hold has not expired yet. Please try again shortly.":
+    "Thời gian giữ vé chưa hết hạn. Vui lòng thử lại sau giây lát.",
+  "Seat hold expired": "Hết thời gian giữ chỗ",
+  "Booked at": "Đặt lúc",
+  "Expired at": "Hết hạn lúc",
+  passenger: "hành khách",
+  passengers: "hành khách",
+  Seats: "Ghế",
+  "Need refund support? Please contact support.":
+    "Cần hỗ trợ hoàn tiền? Vui lòng liên hệ hỗ trợ.",
+  "Rebook this tour": "Đặt lại tour này",
   "Booking confirmed!": "Đặt chỗ thành công!",
   "Your combo e-ticket is ready. Reference": "Vé điện tử combo đã sẵn sàng. Mã đặt chỗ",
-  "Your unified combo QR e-ticket for transport boarding and attraction entry.": "Vé điện tử combo QR dùng để lên phương tiện và vào điểm tham quan.",
+  "Your unified combo QR e-ticket for transport boarding and attraction entry.":
+    "Vé điện tử combo QR dùng để lên phương tiện và vào điểm tham quan.",
   "E-ticket": "Vé điện tử",
   "Your trip tickets": "Vé chuyến đi của bạn",
   "Print / PDF": "In / PDF",
@@ -129,13 +270,14 @@ const vi: Record<string, string> = {
   "Retry issuance": "Thử phát vé lại",
   "Retrying...": "Đang thử lại...",
   "No e-ticket is available for this order yet.": "Chưa có vé điện tử cho đơn này.",
-  "Ticket": "Vé",
-  "Code": "Mã",
+  Ticket: "Vé",
+  Code: "Mã",
   "Tour booking": "Đặt tour",
   "Scan QR": "Quét QR",
   "Staff QR scanner": "Trình quét QR cho nhân viên",
   "Scan e-ticket": "Quét vé điện tử",
-  "Scan the QR code, then choose the vehicle or attraction segment to validate.": "Quét mã QR, sau đó chọn phần phương tiện hoặc điểm tham quan cần xác nhận.",
+  "Scan the QR code, then choose the vehicle or attraction segment to validate.":
+    "Quét mã QR, sau đó chọn phần phương tiện hoặc điểm tham quan cần xác nhận.",
   "Start camera": "Bật camera",
   "Stop camera": "Tắt camera",
   "Scan another ticket": "Quét vé khác",
@@ -143,29 +285,37 @@ const vi: Record<string, string> = {
   "Paste the token from the e-ticket QR": "Dán token lấy từ mã QR vé điện tử",
   "Verify QR": "Xác minh QR",
   "Verifying...": "Đang xác minh...",
-  "Camera scanning is unavailable in this browser; paste the QR token below.": "Trình duyệt này không hỗ trợ quét bằng camera; hãy dán token QR bên dưới.",
-  "Camera access requires a secure HTTPS page.": "Camera yêu cầu trang web sử dụng kết nối HTTPS an toàn.",
+  "Camera scanning is unavailable in this browser; paste the QR token below.":
+    "Trình duyệt này không hỗ trợ quét bằng camera; hãy dán token QR bên dưới.",
+  "Camera access requires a secure HTTPS page.":
+    "Camera yêu cầu trang web sử dụng kết nối HTTPS an toàn.",
   "The camera could not scan this QR code.": "Camera không thể quét mã QR này.",
-  "Camera access was denied or unavailable.": "Camera bị từ chối quyền truy cập hoặc không khả dụng.",
-  "If camera scanning is unavailable, paste the QR token here.": "Nếu không quét được bằng camera, hãy dán token QR vào đây.",
+  "Camera access was denied or unavailable.":
+    "Camera bị từ chối quyền truy cập hoặc không khả dụng.",
+  "If camera scanning is unavailable, paste the QR token here.":
+    "Nếu không quét được bằng camera, hãy dán token QR vào đây.",
   "Checking staff access...": "Đang kiểm tra quyền nhân viên...",
   "Staff access required": "Cần quyền nhân viên",
-  "Only staff or admin users may scan e-tickets.": "Chỉ nhân viên hoặc quản trị viên mới được quét vé điện tử.",
+  "Only staff or admin users may scan e-tickets.":
+    "Chỉ nhân viên hoặc quản trị viên mới được quét vé điện tử.",
   "The e-ticket could not be verified.": "Không thể xác minh vé điện tử.",
   "This QR code is invalid or has been replaced.": "Mã QR không hợp lệ hoặc đã được thay thế.",
   "This e-ticket has been cancelled.": "Vé điện tử này đã bị hủy.",
   "This e-ticket has expired.": "Vé điện tử này đã hết hạn.",
   "The e-ticket segments could not be loaded.": "Không thể tải các phần của vé điện tử.",
   "The e-ticket segment data is invalid.": "Dữ liệu phần vé điện tử không hợp lệ.",
-  "Scan or enter a QR token before choosing a segment.": "Hãy quét hoặc nhập token QR trước khi chọn phần vé.",
+  "Scan or enter a QR token before choosing a segment.":
+    "Hãy quét hoặc nhập token QR trước khi chọn phần vé.",
   "Verified ticket": "Vé đã xác minh",
-  "Expires": "Hết hạn",
+  Expires: "Hết hạn",
   "Select a ticket segment": "Chọn phần vé",
   "Vehicle boarding": "Lên phương tiện",
   "Attraction entry": "Vào điểm tham quan",
-  "Unused": "Chưa sử dụng",
-  "Used": "Đã sử dụng",
-  "Cancelled": "Đã hủy",
+  Unused: "Chưa sử dụng",
+  Used: "Đã sử dụng",
+  Cancelled: "Đã hủy",
+  Valid: "Còn hiệu lực",
+  Expired: "Hết hạn",
   "Accepted: segment marked used.": "Đã chấp nhận: phần vé được đánh dấu đã sử dụng.",
   "Rejected: this segment was already used.": "Từ chối: phần vé này đã được sử dụng.",
   "Rejected: this ticket segment is cancelled.": "Từ chối: phần vé này đã bị hủy.",
@@ -176,47 +326,75 @@ const vi: Record<string, string> = {
   "The segment scan could not be recorded.": "Không thể ghi nhận lượt quét phần vé.",
   "Travel date": "Ngày đi",
   "Pickup point": "Điểm đón",
-  "Seat": "Ghế",
+  Seat: "Ghế",
   "Pickup time": "Giờ đón",
-  "Traveller": "Khách hàng",
-  "Status": "Trạng thái",
+  Traveller: "Khách hàng",
+  Status: "Trạng thái",
   "Ticket segments": "Phần của vé",
   "No segments are available yet.": "Chưa có phần vé nào.",
-  "Transport": "Phương tiện",
-  "Attraction": "Điểm tham quan",
+  Transport: "Phương tiện",
+  Attraction: "Điểm tham quan",
   "This ticket has not been issued yet.": "Vé này chưa được phát hành.",
   "Sending...": "Đang gửi...",
   "Transport + Attraction": "Di chuyển + Tham quan",
   "One QR · boarding + entry": "Một mã QR · lên xe + vào cửa",
-  "Pickup time": "Giờ đón", "None": "Không có", "Amount paid": "Số tiền đã thanh toán",
-  "Trip recap": "Tóm tắt chuyến đi", "Offline access enabled": "Có thể xem khi ngoại tuyến",
-  "Downloaded": "Đã tải xuống", "Download PDF": "Tải PDF", "Add to Wallet": "Thêm vào Ví", "Email / SMS": "Email / SMS", "Book another tour": "Đặt tour khác",
+  "Pickup time": "Giờ đón",
+  None: "Không có",
+  "Amount paid": "Số tiền đã thanh toán",
+  "Trip recap": "Tóm tắt chuyến đi",
+  "Offline access enabled": "Có thể xem khi ngoại tuyến",
+  Downloaded: "Đã tải xuống",
+  "Download PDF": "Tải PDF",
+  "Add to Wallet": "Thêm vào Ví",
+  "Email / SMS": "Email / SMS",
+  "Book another tour": "Đặt tour khác",
   "Create your account": "Tạo tài khoản",
   "Welcome back": "Chào mừng trở lại",
-  "Book combo e-tickets and keep every trip in one place.": "Đặt vé điện tử combo và quản lý mọi chuyến đi tại một nơi.",
-  "Sign in to manage your bookings and saved tours.": "Đăng nhập để quản lý đặt chỗ và tour đã lưu.",
+  "Book combo e-tickets and keep every trip in one place.":
+    "Đặt vé điện tử combo và quản lý mọi chuyến đi tại một nơi.",
+  "Sign in to manage your bookings and saved tours.":
+    "Đăng nhập để quản lý đặt chỗ và tour đã lưu.",
   "Or continue with": "Hoặc tiếp tục với",
-  "Password": "Mật khẩu", "Confirm password": "Xác nhận mật khẩu",
-  "I agree to the": "Tôi đồng ý với", "Terms & Conditions": "Điều khoản & Điều kiện", "and Privacy Policy.": "và Chính sách quyền riêng tư.",
-  "Remember me": "Ghi nhớ tôi", "Forgot password?": "Quên mật khẩu?", "Create Account": "Tạo tài khoản", "Sign In": "Đăng nhập",
-  "Already have an account?": "Đã có tài khoản?", "Don't have an account?": "Chưa có tài khoản?", "Sign up": "Đăng ký",
-  "Passwords do not match.": "Mật khẩu không khớp.", "Password must be at least 6 characters.": "Mật khẩu phải có ít nhất 6 ký tự.",
-  "Please accept the Terms & Conditions to continue.": "Vui lòng chấp nhận Điều khoản & Điều kiện để tiếp tục.",
-  "Enter your email first, then tap Forgot password.": "Hãy nhập email trước, sau đó chọn Quên mật khẩu.",
+  Password: "Mật khẩu",
+  "Confirm password": "Xác nhận mật khẩu",
+  "I agree to the": "Tôi đồng ý với",
+  "Terms & Conditions": "Điều khoản & Điều kiện",
+  "and Privacy Policy.": "và Chính sách quyền riêng tư.",
+  "Remember me": "Ghi nhớ tôi",
+  "Forgot password?": "Quên mật khẩu?",
+  "Create Account": "Tạo tài khoản",
+  "Sign In": "Đăng nhập",
+  "Already have an account?": "Đã có tài khoản?",
+  "Don't have an account?": "Chưa có tài khoản?",
+  "Sign up": "Đăng ký",
+  "Passwords do not match.": "Mật khẩu không khớp.",
+  "Password must be at least 6 characters.": "Mật khẩu phải có ít nhất 6 ký tự.",
+  "Please accept the Terms & Conditions to continue.":
+    "Vui lòng chấp nhận Điều khoản & Điều kiện để tiếp tục.",
+  "Enter your email first, then tap Forgot password.":
+    "Hãy nhập email trước, sau đó chọn Quên mật khẩu.",
   "Welcome to TAT Booking!": "Chào mừng đến với TAT Booking!",
-  "Set a new password": "Đặt mật khẩu mới", "New password": "Mật khẩu mới", "Update password": "Cập nhật mật khẩu", "Password updated": "Đã cập nhật mật khẩu",
-  "Choose a new password for your TAT Booking account.": "Chọn mật khẩu mới cho tài khoản TAT Booking của bạn.",
-  "Choose a new password for your TAT Booking account and get back to your trips.": "Chọn mật khẩu mới cho tài khoản TAT Booking và tiếp tục hành trình của bạn.",
-  "Set a new password for your TAT Booking account.": "Đặt mật khẩu mới cho tài khoản TAT Booking của bạn.",
-  "Tours, transport, bookings and staff in one place.": "Quản lý tour, phương tiện, đặt chỗ và nhân viên tại một nơi.",
-  "Manage tours, transport, bookings and users.": "Quản lý tour, phương tiện, đặt chỗ và người dùng.",
+  "Set a new password": "Đặt mật khẩu mới",
+  "New password": "Mật khẩu mới",
+  "Update password": "Cập nhật mật khẩu",
+  "Password updated": "Đã cập nhật mật khẩu",
+  "Choose a new password for your TAT Booking account.":
+    "Chọn mật khẩu mới cho tài khoản TAT Booking của bạn.",
+  "Choose a new password for your TAT Booking account and get back to your trips.":
+    "Chọn mật khẩu mới cho tài khoản TAT Booking và tiếp tục hành trình của bạn.",
+  "Set a new password for your TAT Booking account.":
+    "Đặt mật khẩu mới cho tài khoản TAT Booking của bạn.",
+  "Tours, transport, bookings and staff in one place.":
+    "Quản lý tour, phương tiện, đặt chỗ và nhân viên tại một nơi.",
+  "Manage tours, transport, bookings and users.":
+    "Quản lý tour, phương tiện, đặt chỗ và người dùng.",
   "Add tour": "Thêm tour",
   "Add tours and review the current catalog.": "Thêm tour và xem danh mục hiện tại.",
   "Tour preview": "Ảnh xem trước tour",
-  "Image": "Ảnh",
-  "Vehicles": "Số lượng xe",
+  Image: "Ảnh",
+  Vehicles: "Số lượng xe",
   "Available slots": "Chỗ trống",
-  "Actions": "Thao tác",
+  Actions: "Thao tác",
   "Loading tours...": "Đang tải tour...",
   "No tours found.": "Chưa có tour nào.",
   "Tour name": "Tên tour",
@@ -224,29 +402,32 @@ const vi: Record<string, string> = {
   "Paste a public image URL or Storage path": "Dán URL ảnh công khai hoặc đường dẫn Storage",
   "Tour image preview": "Xem trước ảnh tour",
   "Price (USD)": "Giá (USD)",
-  "Duration": "Thời lượng",
-  "Transport": "Phương tiện",
-  "Summary": "Mô tả ngắn",
+  Duration: "Thời lượng",
+  Transport: "Phương tiện",
+  Summary: "Mô tả ngắn",
   "Tour status": "Trạng thái tour",
   "For sale": "Còn bán",
   "Temporarily closed": "Tạm đóng",
   "Required vehicles": "Số xe cần thiết",
   "Manage Timeline": "Quản lý lịch trình",
-  "Manage vehicles, drivers and assigned tours.": "Quản lý phương tiện, tài xế và tour được phân công.",
+  "Manage vehicles, drivers and assigned tours.":
+    "Quản lý phương tiện, tài xế và tour được phân công.",
   "Add vehicle": "Thêm xe",
   "Edit vehicle": "Sửa xe",
   "Choose a tour": "Chọn tour",
   "License plate": "Biển số",
-  "Capacity": "Sức chứa",
+  Capacity: "Sức chứa",
   "Capacity (seats)": "Sức chứa (chỗ)",
-  "seats": "chỗ",
+  seats: "chỗ",
   "Driver name": "Tên tài xế",
   "Save vehicle": "Lưu xe",
   "Loading vehicles...": "Đang tải phương tiện...",
   "No vehicles found.": "Chưa có phương tiện.",
   "Recent bookings": "Đặt chỗ gần đây",
-  "Updated": "Cập nhật",
-  "Inactive": "Không hoạt động",
+  "Loading recent bookings...": "Đang tải đặt chỗ gần đây...",
+  "No sold tickets found.": "Không tìm thấy vé đã bán.",
+  Updated: "Cập nhật",
+  Inactive: "Không hoạt động",
   "Not updated": "Chưa cập nhật",
   "Loading users...": "Đang tải người dùng...",
   "Unable to load users": "Không thể tải người dùng",
@@ -255,103 +436,261 @@ const vi: Record<string, string> = {
   "Phone of": "Số điện thoại của",
   "Role of": "Vai trò của",
   "Status of": "Trạng thái của",
-  "Save": "Lưu",
+  Save: "Lưu",
   "Edit tour": "Sửa tour",
   "Unable to find the tour ID to update.": "Không tìm thấy ID tour để cập nhật.",
   "Unable to find the tour ID to delete.": "Không tìm thấy ID tour để xóa.",
   "Delete tour": "Xóa tour",
   "Delete tour?": "Xóa tour này?",
-  "This action cannot be undone. The tour will be permanently deleted.": "Không thể hoàn tác thao tác này. Tour sẽ bị xóa vĩnh viễn.",
+  "This action cannot be undone. The tour will be permanently deleted.":
+    "Không thể hoàn tác thao tác này. Tour sẽ bị xóa vĩnh viễn.",
   "Saving...": "Đang lưu...",
   "Save changes": "Lưu thay đổi",
   "Save tour": "Lưu tour",
-  "Cancel": "Hủy",
+  Cancel: "Hủy",
   "Sign in to view staff and roles.": "Đăng nhập để xem danh sách nhân viên và vai trò.",
-  "Settings": "Cài đặt", "Total bookings": "Tổng lượt đặt", "Revenue (30d)": "Doanh thu (30 ngày)", "Seat utilization": "Tỷ lệ sử dụng chỗ", "Active tours": "Tour đang hoạt động",
-  "Tours & Catalog": "Tour & danh mục", "Transport & Providers": "Phương tiện", "Bookings & Revenue": "Đặt chỗ & doanh thu", "Users & Security": "Người dùng & bảo mật",
-  "Tour": "Tour", "Destination": "Điểm đến", "Price": "Giá", "Rating": "Đánh giá", "Status": "Trạng thái", "Live": "Đang bán", "Edit": "Sửa", "Hide": "Ẩn",
-  "Seat capacity": "Sức chứa", "Attraction quota": "Số điểm tham quan", "This month": "Tháng này", "Booking": "Mã đặt", "Customer": "Khách hàng", "Amount": "Số tiền",
-  "Paid": "Đã thanh toán", "Pending": "Đang chờ", "Refunded": "Đã hoàn tiền", "Staff & roles": "Nhân viên & vai trò", "Add user": "Thêm người dùng", "Name": "Tên", "Role": "Vai trò", "Active": "Hoạt động", "Suspended": "Tạm khóa", "Moderator": "Điều phối viên", "Staff": "Nhân viên", "Guest": "Khách",
-  "Page not found": "Không tìm thấy trang", "The page you're looking for doesn't exist or has been moved.": "Trang bạn tìm không tồn tại hoặc đã được di chuyển.", "Go home": "Về trang chủ",
-  "This page didn't load": "Không thể tải trang", "Something went wrong on our end. You can try refreshing or head back home.": "Đã xảy ra lỗi. Bạn có thể thử tải lại hoặc về trang chủ.", "Try again": "Thử lại",
+  Settings: "Cài đặt",
+  "Tickets sold": "Vé đã bán",
+  "Revenue (30d)": "Doanh thu (30 ngày)",
+  "Seat utilization": "Tỷ lệ sử dụng chỗ",
+  "Active tours": "Tour đang hoạt động",
+  "Tours & Catalog": "Tour & danh mục",
+  "Transport & Providers": "Phương tiện",
+  "Bookings & Revenue": "Đặt chỗ & doanh thu",
+  "Users & Security": "Người dùng & bảo mật",
+  Tour: "Tour",
+  Destination: "Điểm đến",
+  Price: "Giá",
+  Rating: "Đánh giá",
+  Status: "Trạng thái",
+  Live: "Đang bán",
+  Edit: "Sửa",
+  Hide: "Ẩn",
+  "Seat capacity": "Sức chứa",
+  "Attraction quota": "Số điểm tham quan",
+  "This month": "Tháng này",
+  Booking: "Mã đặt",
+  Customer: "Khách hàng",
+  Amount: "Số tiền",
+  Paid: "Đã thanh toán",
+  Pending: "Đang chờ",
+  "Pending payment": "Đang chờ thanh toán",
+  Refunded: "Đã hoàn tiền",
+  "Staff & roles": "Nhân viên & vai trò",
+  "Add user": "Thêm người dùng",
+  Name: "Tên",
+  Role: "Vai trò",
+  Active: "Hoạt động",
+  Suspended: "Tạm khóa",
+  Moderator: "Điều phối viên",
+  Staff: "Nhân viên",
+  Guest: "Khách",
+  "Page not found": "Không tìm thấy trang",
+  "The page you're looking for doesn't exist or has been moved.":
+    "Trang bạn tìm không tồn tại hoặc đã được di chuyển.",
+  "Go home": "Về trang chủ",
+  "This page didn't load": "Không thể tải trang",
+  "Something went wrong on our end. You can try refreshing or head back home.":
+    "Đã xảy ra lỗi. Bạn có thể thử tải lại hoặc về trang chủ.",
+  "Try again": "Thử lại",
   "Emerald Bay Cruise & Cave Discovery": "Du thuyền Vịnh Ngọc & khám phá hang động",
   "Golden Temple Trail & Heritage Walk": "Hành trình đền vàng & dạo bước di sản",
   "Highland Terraces Sunrise Expedition": "Đón bình minh trên ruộng bậc thang",
   "Lantern Old Town Evening & Boat Ride": "Phố cổ đèn lồng & du thuyền buổi tối",
   "Turquoise Island Hopping & Snorkel Combo": "Combo khám phá đảo xanh & lặn ngắm san hô",
   "Jungle Waterfall & Canopy Walk": "Thác rừng & đường đi trên tán cây",
-  "Ha Long Bay": "Vịnh Hạ Long", "Sapa Highlands": "Cao nguyên Sa Pa", "Hoi An": "Hội An", "Phu Quoc": "Phú Quốc", "Da Lat": "Đà Lạt",
-  "1 day · 10h": "1 ngày · 10 giờ", "1 day · 8h": "1 ngày · 8 giờ", "2 days · 1 night": "2 ngày · 1 đêm", "Half day · 5h": "Nửa ngày · 5 giờ", "1 day · 9h": "1 ngày · 9 giờ", "1 day · 7h": "1 ngày · 7 giờ",
-  "Old Quarter Lobby Lounge": "Sảnh khách sạn Phố Cổ", "Central Station — Gate B": "Ga trung tâm — Cổng B", "Riverside Hotel Strip": "Dãy khách sạn ven sông", "Airport Road Shuttle Bay": "Điểm đón đường sân bay"
-  ,"Ayutthaya": "Ayutthaya"
-  ,"Sail through limestone karsts on a private day cruise, with kayaking, a cave walk and a seafood lunch on board.": "Du ngoạn giữa những núi đá vôi trên du thuyền riêng trong ngày, chèo kayak, khám phá hang động và dùng bữa trưa hải sản trên tàu."
-  ,"A slow-travel rail journey to the old capital, with three temple entries and a riverside lunch included.": "Hành trình tàu hỏa thư thả đến cố đô, bao gồm vé vào ba ngôi đền và bữa trưa bên sông."
-  ,"Overnight sleeper coach to the terraces, sunrise viewpoint access and a guided village trek with a homestay meal.": "Xe giường nằm qua đêm đến vùng ruộng bậc thang, ngắm bình minh và đi bộ bản làng cùng hướng dẫn viên, kèm bữa ăn tại nhà dân."
-  ,"Private car transfer to the lantern-lit old town with a heritage ticket, street-food tasting and a river boat ride.": "Xe riêng đưa đón đến phố cổ lung linh đèn lồng, kèm vé di sản, thưởng thức ẩm thực đường phố và đi thuyền trên sông."
-  ,"Three-island speedboat route with snorkel gear, a beach club pass and an all-you-can-eat grill lunch.": "Hành trình tàu cao tốc qua ba đảo, kèm dụng cụ lặn, vé câu lạc bộ bãi biển và tiệc nướng tự chọn."
-  ,"Private car into the highlands for a canopy boardwalk, waterfall pool swim and a forest picnic.": "Xe riêng lên cao nguyên để đi bộ trên tán rừng, tắm hồ thác nước và dã ngoại giữa rừng."
-  ,"Sung Sot Cave entry": "Vé vào hang Sửng Sốt", "Titop Island viewpoint": "Điểm ngắm cảnh đảo Titop", "Kayak rental (1h)": "Thuê kayak (1 giờ)"
-  ,"Wat Mahathat entry": "Vé vào Wat Mahathat", "Historical Park pass": "Vé Công viên Lịch sử", "River shuttle boat": "Thuyền đưa đón trên sông"
-  ,"Cat Cat village entry": "Vé vào bản Cát Cát", "Fansipan cable car": "Cáp treo Fansipan", "Sunrise viewpoint pass": "Vé điểm ngắm bình minh"
-  ,"Old Town heritage ticket": "Vé di sản Phố Cổ", "River boat with lantern": "Thuyền sông và đèn hoa đăng"
-  ,"Snorkel park entry": "Vé công viên lặn biển", "Beach club day pass": "Vé ngày câu lạc bộ bãi biển"
-  ,"National park entry": "Vé vào vườn quốc gia", "Canopy walkway ticket": "Vé đường đi trên tán rừng"
-  ,"Pickup at Old Quarter": "Đón tại Phố Cổ", "Meet your guide at the hotel lobby lounge.": "Gặp hướng dẫn viên tại sảnh khách sạn."
-  ,"Board the cruise": "Lên du thuyền", "Welcome drink and safety briefing at Tuan Chau pier.": "Thưởng thức đồ uống chào mừng và nghe hướng dẫn an toàn tại bến Tuần Châu."
-  ,"Sung Sot Cave": "Hang Sửng Sốt", "Guided walk through the three vaulted chambers.": "Tham quan có hướng dẫn qua ba khoang hang mái vòm."
-  ,"Seafood lunch on deck": "Bữa trưa hải sản trên boong", "Set menu with vegetarian option.": "Thực đơn theo suất, có lựa chọn món chay."
-  ,"Kayak & swim stop": "Chèo kayak & tắm biển", "Free time around Luon lagoon.": "Tự do khám phá khu vực đầm Luồn."
-  ,"Drop-off": "Trả khách", "Return to your original pickup point.": "Trở về điểm đón ban đầu."
-  ,"Meet at Central Station": "Gặp tại Ga Trung tâm", "Guide hands out rail tickets at Gate B.": "Hướng dẫn viên phát vé tàu tại Cổng B."
-  ,"Arrive old capital": "Đến cố đô", "Short tuk-tuk transfer to first temple.": "Di chuyển ngắn bằng tuk-tuk đến ngôi đền đầu tiên."
-  ,"Guided heritage walk, 90 minutes.": "Đi bộ khám phá di sản cùng hướng dẫn viên trong 90 phút."
-  ,"Riverside lunch": "Bữa trưa bên sông", "Local set menu overlooking the river.": "Thực đơn địa phương theo suất nhìn ra sông."
-  ,"Return train": "Tàu trở về", "Reserved seats in car 4.": "Ghế đã đặt trước tại toa số 4."
-  ,"Sleeper coach departs": "Xe giường nằm khởi hành", "Reclining berths with blanket and water.": "Giường ngả có chăn và nước uống."
-  ,"Sunrise viewpoint": "Điểm ngắm bình minh", "Arrive before first light for the terrace panorama.": "Đến trước bình minh để ngắm toàn cảnh ruộng bậc thang."
-  ,"Village trek": "Đi bộ bản làng", "Moderate 6 km loop with local guide.": "Cung đường vòng 6 km vừa sức cùng hướng dẫn viên địa phương."
-  ,"Homestay lunch": "Bữa trưa tại nhà dân", "Family-style highland meal.": "Bữa ăn cao nguyên kiểu gia đình."
-  ,"Cable car": "Cáp treo", "Optional summit ride included in combo.": "Chuyến cáp treo lên đỉnh tùy chọn đã gồm trong combo."
-  ,"Hotel pickup": "Đón tại khách sạn", "Private 4-seat car with driver.": "Xe riêng 4 chỗ có tài xế."
-  ,"Heritage houses": "Nhà cổ di sản", "Ticket covers five monuments, guide picks three.": "Vé áp dụng cho năm di tích, hướng dẫn viên chọn ba điểm."
-  ,"Street-food tasting": "Thưởng thức ẩm thực đường phố", "Six local tastings on foot.": "Đi bộ thưởng thức sáu món địa phương."
-  ,"River boat": "Thuyền trên sông", "30-minute lantern release ride.": "Chuyến thả hoa đăng kéo dài 30 phút."
-  ,"Coach pickup": "Xe đón khách", "Shared shuttle from Airport Road hotels.": "Xe đưa đón chung từ các khách sạn trên Đường Sân bay."
-  ,"Speedboat departs": "Tàu cao tốc khởi hành", "Life jackets and snorkel kit provided.": "Có sẵn áo phao và bộ dụng cụ lặn."
-  ,"Coral reef stop": "Điểm dừng rạn san hô", "Guided snorkel with instructor.": "Lặn ngắm san hô cùng huấn luyện viên."
-  ,"Grill lunch": "Bữa trưa tiệc nướng", "Beach club buffet.": "Tiệc buffet tại câu lạc bộ bãi biển."
-  ,"Return": "Trở về", "Drop-off at the pickup point.": "Trả khách tại điểm đón."
-  ,"Private car, air-conditioned.": "Xe riêng có điều hòa.", "Park entry": "Vào công viên", "Ranger briefing and trail map.": "Hướng dẫn từ kiểm lâm và nhận bản đồ đường mòn."
-  ,"Canopy walkway": "Đường đi trên tán rừng", "600 m suspended boardwalk.": "Lối đi treo dài 600 m."
-  ,"Waterfall picnic": "Dã ngoại bên thác", "Packed picnic by the pool.": "Bữa ăn dã ngoại bên hồ."
-  ,"Air-conditioned coach": "Xe khách có điều hòa", "Licensed English guide": "Hướng dẫn viên tiếng Anh có chứng chỉ", "Cave & island entry tickets": "Vé vào hang và đảo", "Lunch on board": "Bữa trưa trên tàu"
-  ,"Personal expenses": "Chi phí cá nhân", "Tips": "Tiền boa", "Travel insurance": "Bảo hiểm du lịch"
-  ,"Return rail ticket": "Vé tàu khứ hồi", "3 temple entries": "Vé vào 3 ngôi đền", "Guide": "Hướng dẫn viên", "Lunch": "Bữa trưa", "Drinks": "Đồ uống", "Hotel transfer": "Đưa đón khách sạn"
-  ,"Sleeper coach both ways": "Xe giường nằm khứ hồi", "Homestay night": "Một đêm nhà dân", "Viewpoint & village entries": "Vé điểm ngắm cảnh và bản làng", "2 meals": "2 bữa ăn", "Trekking poles": "Gậy leo núi", "Personal gear": "Đồ dùng cá nhân"
-  ,"Heritage ticket": "Vé di sản", "Food tastings": "Thưởng thức ẩm thực", "Boat ride": "Đi thuyền", "Alcoholic drinks": "Đồ uống có cồn", "Souvenirs": "Quà lưu niệm"
-  ,"Coach transfer": "Xe đưa đón", "Speedboat": "Tàu cao tốc", "Snorkel gear": "Dụng cụ lặn", "Buffet lunch": "Bữa trưa buffet", "Beach club pass": "Vé câu lạc bộ bãi biển", "Diving upgrade": "Nâng cấp lặn biển", "Underwater camera": "Máy ảnh dưới nước"
-  ,"Park & canopy tickets": "Vé công viên và đường đi trên tán rừng", "Picnic": "Dã ngoại", "Swim gear": "Đồ bơi", "Insurance": "Bảo hiểm"
-  ,"Old Quarter pickup": "Điểm đón Phố Cổ", "Highway rest stop": "Trạm nghỉ cao tốc", "Tuan Chau pier": "Bến Tuần Châu"
-  ,"Riverside halt": "Điểm dừng bên sông", "Historical Park": "Công viên Lịch sử", "Wat Mahathat": "Wat Mahathat"
-  ,"Mountain pass stop": "Điểm dừng đèo núi", "Cable car station": "Ga cáp treo", "Beach resorts pickup": "Điểm đón khu nghỉ dưỡng biển", "Old Town gate": "Cổng Phố Cổ"
-  ,"Airport Road pickup": "Điểm đón Đường Sân bay", "Marina": "Bến du thuyền", "Coral reef": "Rạn san hô", "Beach club": "Câu lạc bộ bãi biển", "City Center pickup": "Điểm đón Trung tâm", "Forest gate": "Cổng rừng", "Waterfall": "Thác nước"
-  ,"Cruise": "Du thuyền", "UNESCO": "UNESCO", "Temples": "Đền chùa", "Trekking": "Đi bộ đường dài", "Overnight": "Qua đêm", "Evening": "Buổi tối", "Snorkeling": "Lặn biển", "Family": "Gia đình"
-  ,"Tour coach on a coastal mountain road at sunset": "Xe du lịch trên cung đường núi ven biển lúc hoàng hôn"
-  ,"Accept terms and conditions": "Chấp nhận điều khoản và điều kiện", "We sent a confirmation link to": "Chúng tôi đã gửi liên kết xác nhận đến", "Password reset link sent to": "Đã gửi liên kết đặt lại mật khẩu đến"
-  ,"Open it to activate your account.": "Hãy mở liên kết để kích hoạt tài khoản.", "pax": "hành khách"
-  ,"Free cancellation up to 24h before departure.": "Hủy miễn phí trước giờ khởi hành tối đa 24 giờ."
-  ,"TAT Booking — Tours, Transport & Attraction Combo Tickets": "TAT Booking — Tour, phương tiện & vé tham quan combo"
-  ,"Explore destinations and book transport seats plus attraction entry in one combo e-ticket. Live seat maps, route maps and transparent pricing.": "Khám phá điểm đến, đặt chỗ phương tiện và vé tham quan trong một vé điện tử combo. Sơ đồ chỗ ngồi, bản đồ hành trình trực tiếp và giá minh bạch."
-  ,"TAT Booking — One trip, one combo e-ticket": "TAT Booking — Một hành trình, một vé điện tử combo"
-  ,"Book tours, seats and attraction tickets together with transparent pricing.": "Đặt tour, chỗ ngồi và vé tham quan cùng lúc với giá minh bạch."
-  ,"Browse Tours & Route Maps — TAT Booking": "Xem tour & bản đồ hành trình — TAT Booking"
-  ,"Tour Detail & Seat Selection — TAT Booking": "Chi tiết tour & chọn chỗ — TAT Booking", "Checkout — TAT Booking": "Thanh toán — TAT Booking"
-  ,"Combo E-Ticket Confirmed — TAT Booking": "Đã xác nhận vé điện tử combo — TAT Booking", "Admin Dashboard — TAT Booking": "Trang quản trị — TAT Booking", "Reset your password — TAT Booking": "Đặt lại mật khẩu — TAT Booking"
+  "Ha Long Bay": "Vịnh Hạ Long",
+  "Sapa Highlands": "Cao nguyên Sa Pa",
+  "Hoi An": "Hội An",
+  "Phu Quoc": "Phú Quốc",
+  "Da Lat": "Đà Lạt",
+  "1 day · 10h": "1 ngày · 10 giờ",
+  "1 day · 8h": "1 ngày · 8 giờ",
+  "2 days · 1 night": "2 ngày · 1 đêm",
+  "Half day · 5h": "Nửa ngày · 5 giờ",
+  "1 day · 9h": "1 ngày · 9 giờ",
+  "1 day · 7h": "1 ngày · 7 giờ",
+  "Old Quarter Lobby Lounge": "Sảnh khách sạn Phố Cổ",
+  "Central Station — Gate B": "Ga trung tâm — Cổng B",
+  "Riverside Hotel Strip": "Dãy khách sạn ven sông",
+  "Airport Road Shuttle Bay": "Điểm đón đường sân bay",
+  Ayutthaya: "Ayutthaya",
+  "Sail through limestone karsts on a private day cruise, with kayaking, a cave walk and a seafood lunch on board.":
+    "Du ngoạn giữa những núi đá vôi trên du thuyền riêng trong ngày, chèo kayak, khám phá hang động và dùng bữa trưa hải sản trên tàu.",
+  "A slow-travel rail journey to the old capital, with three temple entries and a riverside lunch included.":
+    "Hành trình tàu hỏa thư thả đến cố đô, bao gồm vé vào ba ngôi đền và bữa trưa bên sông.",
+  "Overnight sleeper coach to the terraces, sunrise viewpoint access and a guided village trek with a homestay meal.":
+    "Xe giường nằm qua đêm đến vùng ruộng bậc thang, ngắm bình minh và đi bộ bản làng cùng hướng dẫn viên, kèm bữa ăn tại nhà dân.",
+  "Private car transfer to the lantern-lit old town with a heritage ticket, street-food tasting and a river boat ride.":
+    "Xe riêng đưa đón đến phố cổ lung linh đèn lồng, kèm vé di sản, thưởng thức ẩm thực đường phố và đi thuyền trên sông.",
+  "Three-island speedboat route with snorkel gear, a beach club pass and an all-you-can-eat grill lunch.":
+    "Hành trình tàu cao tốc qua ba đảo, kèm dụng cụ lặn, vé câu lạc bộ bãi biển và tiệc nướng tự chọn.",
+  "Private car into the highlands for a canopy boardwalk, waterfall pool swim and a forest picnic.":
+    "Xe riêng lên cao nguyên để đi bộ trên tán rừng, tắm hồ thác nước và dã ngoại giữa rừng.",
+  "Sung Sot Cave entry": "Vé vào hang Sửng Sốt",
+  "Titop Island viewpoint": "Điểm ngắm cảnh đảo Titop",
+  "Kayak rental (1h)": "Thuê kayak (1 giờ)",
+  "Wat Mahathat entry": "Vé vào Wat Mahathat",
+  "Historical Park pass": "Vé Công viên Lịch sử",
+  "River shuttle boat": "Thuyền đưa đón trên sông",
+  "Cat Cat village entry": "Vé vào bản Cát Cát",
+  "Fansipan cable car": "Cáp treo Fansipan",
+  "Sunrise viewpoint pass": "Vé điểm ngắm bình minh",
+  "Old Town heritage ticket": "Vé di sản Phố Cổ",
+  "River boat with lantern": "Thuyền sông và đèn hoa đăng",
+  "Snorkel park entry": "Vé công viên lặn biển",
+  "Beach club day pass": "Vé ngày câu lạc bộ bãi biển",
+  "National park entry": "Vé vào vườn quốc gia",
+  "Canopy walkway ticket": "Vé đường đi trên tán rừng",
+  "Pickup at Old Quarter": "Đón tại Phố Cổ",
+  "Meet your guide at the hotel lobby lounge.": "Gặp hướng dẫn viên tại sảnh khách sạn.",
+  "Board the cruise": "Lên du thuyền",
+  "Welcome drink and safety briefing at Tuan Chau pier.":
+    "Thưởng thức đồ uống chào mừng và nghe hướng dẫn an toàn tại bến Tuần Châu.",
+  "Sung Sot Cave": "Hang Sửng Sốt",
+  "Guided walk through the three vaulted chambers.":
+    "Tham quan có hướng dẫn qua ba khoang hang mái vòm.",
+  "Seafood lunch on deck": "Bữa trưa hải sản trên boong",
+  "Set menu with vegetarian option.": "Thực đơn theo suất, có lựa chọn món chay.",
+  "Kayak & swim stop": "Chèo kayak & tắm biển",
+  "Free time around Luon lagoon.": "Tự do khám phá khu vực đầm Luồn.",
+  "Drop-off": "Trả khách",
+  "Return to your original pickup point.": "Trở về điểm đón ban đầu.",
+  "Meet at Central Station": "Gặp tại Ga Trung tâm",
+  "Guide hands out rail tickets at Gate B.": "Hướng dẫn viên phát vé tàu tại Cổng B.",
+  "Arrive old capital": "Đến cố đô",
+  "Short tuk-tuk transfer to first temple.": "Di chuyển ngắn bằng tuk-tuk đến ngôi đền đầu tiên.",
+  "Guided heritage walk, 90 minutes.": "Đi bộ khám phá di sản cùng hướng dẫn viên trong 90 phút.",
+  "Riverside lunch": "Bữa trưa bên sông",
+  "Local set menu overlooking the river.": "Thực đơn địa phương theo suất nhìn ra sông.",
+  "Return train": "Tàu trở về",
+  "Reserved seats in car 4.": "Ghế đã đặt trước tại toa số 4.",
+  "Sleeper coach departs": "Xe giường nằm khởi hành",
+  "Reclining berths with blanket and water.": "Giường ngả có chăn và nước uống.",
+  "Sunrise viewpoint": "Điểm ngắm bình minh",
+  "Arrive before first light for the terrace panorama.":
+    "Đến trước bình minh để ngắm toàn cảnh ruộng bậc thang.",
+  "Village trek": "Đi bộ bản làng",
+  "Moderate 6 km loop with local guide.":
+    "Cung đường vòng 6 km vừa sức cùng hướng dẫn viên địa phương.",
+  "Homestay lunch": "Bữa trưa tại nhà dân",
+  "Family-style highland meal.": "Bữa ăn cao nguyên kiểu gia đình.",
+  "Cable car": "Cáp treo",
+  "Optional summit ride included in combo.":
+    "Chuyến cáp treo lên đỉnh tùy chọn đã gồm trong combo.",
+  "Hotel pickup": "Đón tại khách sạn",
+  "Private 4-seat car with driver.": "Xe riêng 4 chỗ có tài xế.",
+  "Heritage houses": "Nhà cổ di sản",
+  "Ticket covers five monuments, guide picks three.":
+    "Vé áp dụng cho năm di tích, hướng dẫn viên chọn ba điểm.",
+  "Street-food tasting": "Thưởng thức ẩm thực đường phố",
+  "Six local tastings on foot.": "Đi bộ thưởng thức sáu món địa phương.",
+  "River boat": "Thuyền trên sông",
+  "30-minute lantern release ride.": "Chuyến thả hoa đăng kéo dài 30 phút.",
+  "Coach pickup": "Xe đón khách",
+  "Shared shuttle from Airport Road hotels.":
+    "Xe đưa đón chung từ các khách sạn trên Đường Sân bay.",
+  "Speedboat departs": "Tàu cao tốc khởi hành",
+  "Life jackets and snorkel kit provided.": "Có sẵn áo phao và bộ dụng cụ lặn.",
+  "Coral reef stop": "Điểm dừng rạn san hô",
+  "Guided snorkel with instructor.": "Lặn ngắm san hô cùng huấn luyện viên.",
+  "Grill lunch": "Bữa trưa tiệc nướng",
+  "Beach club buffet.": "Tiệc buffet tại câu lạc bộ bãi biển.",
+  Return: "Trở về",
+  "Drop-off at the pickup point.": "Trả khách tại điểm đón.",
+  "Private car, air-conditioned.": "Xe riêng có điều hòa.",
+  "Park entry": "Vào công viên",
+  "Ranger briefing and trail map.": "Hướng dẫn từ kiểm lâm và nhận bản đồ đường mòn.",
+  "Canopy walkway": "Đường đi trên tán rừng",
+  "600 m suspended boardwalk.": "Lối đi treo dài 600 m.",
+  "Waterfall picnic": "Dã ngoại bên thác",
+  "Packed picnic by the pool.": "Bữa ăn dã ngoại bên hồ.",
+  "Air-conditioned coach": "Xe khách có điều hòa",
+  "Licensed English guide": "Hướng dẫn viên tiếng Anh có chứng chỉ",
+  "Cave & island entry tickets": "Vé vào hang và đảo",
+  "Lunch on board": "Bữa trưa trên tàu",
+  "Personal expenses": "Chi phí cá nhân",
+  Tips: "Tiền boa",
+  "Travel insurance": "Bảo hiểm du lịch",
+  "Return rail ticket": "Vé tàu khứ hồi",
+  "3 temple entries": "Vé vào 3 ngôi đền",
+  Guide: "Hướng dẫn viên",
+  Lunch: "Bữa trưa",
+  Drinks: "Đồ uống",
+  "Hotel transfer": "Đưa đón khách sạn",
+  "Sleeper coach both ways": "Xe giường nằm khứ hồi",
+  "Homestay night": "Một đêm nhà dân",
+  "Viewpoint & village entries": "Vé điểm ngắm cảnh và bản làng",
+  "2 meals": "2 bữa ăn",
+  "Trekking poles": "Gậy leo núi",
+  "Personal gear": "Đồ dùng cá nhân",
+  "Heritage ticket": "Vé di sản",
+  "Food tastings": "Thưởng thức ẩm thực",
+  "Boat ride": "Đi thuyền",
+  "Alcoholic drinks": "Đồ uống có cồn",
+  Souvenirs: "Quà lưu niệm",
+  "Coach transfer": "Xe đưa đón",
+  Speedboat: "Tàu cao tốc",
+  "Snorkel gear": "Dụng cụ lặn",
+  "Buffet lunch": "Bữa trưa buffet",
+  "Beach club pass": "Vé câu lạc bộ bãi biển",
+  "Diving upgrade": "Nâng cấp lặn biển",
+  "Underwater camera": "Máy ảnh dưới nước",
+  "Park & canopy tickets": "Vé công viên và đường đi trên tán rừng",
+  Picnic: "Dã ngoại",
+  "Swim gear": "Đồ bơi",
+  Insurance: "Bảo hiểm",
+  "Old Quarter pickup": "Điểm đón Phố Cổ",
+  "Highway rest stop": "Trạm nghỉ cao tốc",
+  "Tuan Chau pier": "Bến Tuần Châu",
+  "Riverside halt": "Điểm dừng bên sông",
+  "Historical Park": "Công viên Lịch sử",
+  "Wat Mahathat": "Wat Mahathat",
+  "Mountain pass stop": "Điểm dừng đèo núi",
+  "Cable car station": "Ga cáp treo",
+  "Beach resorts pickup": "Điểm đón khu nghỉ dưỡng biển",
+  "Old Town gate": "Cổng Phố Cổ",
+  "Airport Road pickup": "Điểm đón Đường Sân bay",
+  Marina: "Bến du thuyền",
+  "Coral reef": "Rạn san hô",
+  "Beach club": "Câu lạc bộ bãi biển",
+  "City Center pickup": "Điểm đón Trung tâm",
+  "Forest gate": "Cổng rừng",
+  Waterfall: "Thác nước",
+  Cruise: "Du thuyền",
+  UNESCO: "UNESCO",
+  Temples: "Đền chùa",
+  Trekking: "Đi bộ đường dài",
+  Overnight: "Qua đêm",
+  Evening: "Buổi tối",
+  Snorkeling: "Lặn biển",
+  Family: "Gia đình",
+  "Tour coach on a coastal mountain road at sunset":
+    "Xe du lịch trên cung đường núi ven biển lúc hoàng hôn",
+  "Accept terms and conditions": "Chấp nhận điều khoản và điều kiện",
+  "We sent a confirmation link to": "Chúng tôi đã gửi liên kết xác nhận đến",
+  "Password reset link sent to": "Đã gửi liên kết đặt lại mật khẩu đến",
+  "Open it to activate your account.": "Hãy mở liên kết để kích hoạt tài khoản.",
+  pax: "hành khách",
+  "Free cancellation up to 24h before departure.":
+    "Hủy miễn phí trước giờ khởi hành tối đa 24 giờ.",
+  "TAT Booking — Tours, Transport & Attraction Combo Tickets":
+    "TAT Booking — Tour, phương tiện & vé tham quan combo",
+  "Explore destinations and book transport seats plus attraction entry in one combo e-ticket. Live seat maps, route maps and transparent pricing.":
+    "Khám phá điểm đến, đặt chỗ phương tiện và vé tham quan trong một vé điện tử combo. Sơ đồ chỗ ngồi, bản đồ hành trình trực tiếp và giá minh bạch.",
+  "TAT Booking — One trip, one combo e-ticket":
+    "TAT Booking — Một hành trình, một vé điện tử combo",
+  "Book tours, seats and attraction tickets together with transparent pricing.":
+    "Đặt tour, chỗ ngồi và vé tham quan cùng lúc với giá minh bạch.",
+  "Browse Tours & Route Maps — TAT Booking": "Xem tour & bản đồ hành trình — TAT Booking",
+  "Tour Detail & Seat Selection — TAT Booking": "Chi tiết tour & chọn chỗ — TAT Booking",
+  "Checkout — TAT Booking": "Thanh toán — TAT Booking",
+  "Combo E-Ticket Confirmed — TAT Booking": "Đã xác nhận vé điện tử combo — TAT Booking",
+  "Admin Dashboard — TAT Booking": "Trang quản trị — TAT Booking",
+  "Reset your password — TAT Booking": "Đặt lại mật khẩu — TAT Booking",
 };
 
-const en: Record<string, string> = Object.fromEntries(
-  Object.keys(vi).map((key) => [key, key]),
-);
+const en: Record<string, string> = Object.fromEntries(Object.keys(vi).map((key) => [key, key]));
 const englishByVietnamese = new Map<string, string>();
 for (const [english, vietnamese] of Object.entries(vi)) {
   if (!englishByVietnamese.has(vietnamese)) englishByVietnamese.set(vietnamese, english);
@@ -367,10 +706,19 @@ const patterns: Array<[RegExp, (...parts: string[]) => string]> = [
   [/^Seat (.+) \(taken\)$/, (s) => `Ghế ${s} (đã có người)`],
   [/^Seat (.+) \(selected\)$/, (s) => `Ghế ${s} (đã chọn)`],
   [/^Seat (.+)$/, (s) => `Ghế ${s}`],
-  [/^Scan with your banking app to pay (.+)$/, (p) => `Quét bằng ứng dụng ngân hàng để thanh toán ${p}`],
-  [/^Your combo e-ticket is ready\. Reference (.+)\.$/, (c) => `Vé điện tử combo đã sẵn sàng. Mã đặt chỗ ${c}.`],
+  [
+    /^Scan with your banking app to pay (.+)$/,
+    (p) => `Quét bằng ứng dụng ngân hàng để thanh toán ${p}`,
+  ],
+  [
+    /^Your combo e-ticket is ready\. Reference (.+)\.$/,
+    (c) => `Vé điện tử combo đã sẵn sàng. Mã đặt chỗ ${c}.`,
+  ],
   [/^(\d+) selected$/, (n) => `Đã chọn ${n}`],
-  [/^(\d+) route points · pickup, stopovers and attraction entries shown live\.$/, (n) => `${n} điểm trên tuyến · hiển thị trực tiếp điểm đón, điểm dừng và điểm tham quan.`],
+  [
+    /^(\d+) route points · pickup, stopovers and attraction entries shown live\.$/,
+    (n) => `${n} điểm trên tuyến · hiển thị trực tiếp điểm đón, điểm dừng và điểm tham quan.`,
+  ],
   [/^(.+) venues$/, (n) => `${n} địa điểm`],
   [/^Pay (.+)$/, (p) => `Thanh toán ${p}`],
   [/^Seats (.+)$/, (s) => `Chỗ ${s}`],
@@ -421,27 +769,38 @@ function translateDocument(language: Language) {
     const parent = node.parentElement;
     if (parent && !["SCRIPT", "STYLE"].includes(parent.tagName)) {
       const current = node.textContent ?? "";
-       const saved = originals.get(node);
-       const source = saved && (current === saved.source || current === saved.translated) ? saved.source : current;
+      const saved = originals.get(node);
+      const source =
+        saved && (current === saved.source || current === saved.translated)
+          ? saved.source
+          : current;
       const next = language === "vi" ? translateText(source) : restoreEnglishText(source);
-       originals.set(node, { source, translated: next });
+      originals.set(node, { source, translated: next });
       if (current !== next) node.textContent = next;
     }
     node = walker.nextNode();
   }
-  document.querySelectorAll("[aria-label], [placeholder], [title], meta[content]").forEach((element) => {
-    let saved = attrOriginals.get(element);
-    if (!saved) { saved = new Map(); attrOriginals.set(element, saved); }
-    for (const attr of ["aria-label", "placeholder", "title", "content"]) {
-      const current = element.getAttribute(attr);
-      if (!current) continue;
-       const previous = saved.get(attr);
-       const source = previous && (current === previous.source || current === previous.translated) ? previous.source : current;
-      const next = language === "vi" ? translateText(source) : restoreEnglishText(source);
-       saved.set(attr, { source, translated: next });
-       element.setAttribute(attr, next);
-    }
-  });
+  document
+    .querySelectorAll("[aria-label], [placeholder], [title], meta[content]")
+    .forEach((element) => {
+      let saved = attrOriginals.get(element);
+      if (!saved) {
+        saved = new Map();
+        attrOriginals.set(element, saved);
+      }
+      for (const attr of ["aria-label", "placeholder", "title", "content"]) {
+        const current = element.getAttribute(attr);
+        if (!current) continue;
+        const previous = saved.get(attr);
+        const source =
+          previous && (current === previous.source || current === previous.translated)
+            ? previous.source
+            : current;
+        const next = language === "vi" ? translateText(source) : restoreEnglishText(source);
+        saved.set(attr, { source, translated: next });
+        element.setAttribute(attr, next);
+      }
+    });
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -453,17 +812,24 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     translateDocument(language);
     const observer = new MutationObserver(() => translateDocument(language));
-    observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
     return () => observer.disconnect();
   }, [language]);
-   const value = useMemo(() => ({
-     language,
-     setLanguage: (next: Language) => {
-       window.localStorage.setItem(STORAGE_KEY, next);
-       setLanguageState(next);
-     },
-    t: (text: string) => language === "vi" ? translateText(text) : restoreEnglishText(text),
-   }), [language]);
+  const value = useMemo(
+    () => ({
+      language,
+      setLanguage: (next: Language) => {
+        window.localStorage.setItem(STORAGE_KEY, next);
+        setLanguageState(next);
+      },
+      t: (text: string) => (language === "vi" ? translateText(text) : restoreEnglishText(text)),
+    }),
+    [language],
+  );
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 

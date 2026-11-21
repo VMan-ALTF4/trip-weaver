@@ -2,6 +2,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
+import { normalizePhoneToE164 } from "@/lib/booking-profile";
 
 export type OAuthProvider = "google";
 
@@ -20,6 +21,11 @@ type AuthContextValue = {
   loading: boolean;
   profileLoading: boolean;
   displayName: string;
+  profileEditorOpen: boolean;
+  profileEditorRequiresPhone: boolean;
+  openProfileEditor: (options?: { requirePhone?: boolean }) => void;
+  closeProfileEditor: () => void;
+  refreshAuthProfile: () => Promise<{ user: User; profile: Profile | null }>;
   updateProfile: (name: string, sdt: string) => Promise<{ error: string | null }>;
   requestEmailChange: (email: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -42,6 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileLoadedFor, setProfileLoadedFor] = useState<string | null>(null);
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+  const [profileEditorRequiresPhone, setProfileEditorRequiresPhone] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -91,6 +99,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user]);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    let active = true;
+    let refreshing = false;
+
+    const refreshUserOnReturn = () => {
+      if (document.visibilityState !== "visible" || refreshing) return;
+      refreshing = true;
+      void supabase.auth
+        .refreshSession()
+        .then(({ data, error }) => {
+          if (!active) return;
+          if (error) {
+            console.error("Unable to refresh the auth session after returning to the app.", error);
+            return;
+          }
+          if (data.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+          }
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            console.error("Unable to refresh the auth session after returning to the app.", error);
+          }
+        })
+        .finally(() => {
+          refreshing = false;
+        });
+    };
+
+    window.addEventListener("focus", refreshUserOnReturn);
+    document.addEventListener("visibilitychange", refreshUserOnReturn);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", refreshUserOnReturn);
+      document.removeEventListener("visibilitychange", refreshUserOnReturn);
+    };
+  }, []);
+
   const value = useMemo<AuthContextValue>(() => {
     const metaName =
       (user?.user_metadata?.["full_name"] as string | undefined) ??
@@ -104,14 +152,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       profileLoading: profileLoading || Boolean(user && profileLoadedFor !== user.id),
       displayName: profile?.name ?? metaName ?? user?.email?.split("@")[0] ?? "Traveller",
+      profileEditorOpen,
+      profileEditorRequiresPhone,
+
+      openProfileEditor(options) {
+        setProfileEditorRequiresPhone(Boolean(options?.requirePhone));
+        setProfileEditorOpen(true);
+      },
+
+      closeProfileEditor() {
+        setProfileEditorOpen(false);
+        setProfileEditorRequiresPhone(false);
+      },
+
+      async refreshAuthProfile() {
+        if (!isSupabaseConfigured()) throw new Error("Supabase is not configured.");
+        const {
+          data: { session: refreshedSession },
+          error: sessionError,
+        } = await supabase.auth.refreshSession();
+        if (sessionError) throw sessionError;
+        if (!refreshedSession) throw new Error("User is not authenticated.");
+        const refreshedUser = refreshedSession.user;
+
+        const { data, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, name, role, sdt, email")
+          .eq("id", refreshedUser.id)
+          .maybeSingle();
+        if (profileError) throw profileError;
+
+        const refreshedProfile = (data as Profile | null) ?? null;
+        setSession(refreshedSession);
+        setUser(refreshedUser);
+        setProfile(refreshedProfile);
+        setProfileLoadedFor(refreshedUser.id);
+        setProfileLoading(false);
+        return { user: refreshedUser, profile: refreshedProfile };
+      },
 
       async updateProfile(name, sdt) {
         if (!user) return { error: "User is not authenticated" };
         if (!isSupabaseConfigured()) return { error: "Supabase is not configured." };
+        const trimmedPhone = sdt.trim();
+        const normalizedPhone = trimmedPhone ? normalizePhoneToE164(trimmedPhone) : null;
+        if (trimmedPhone && !normalizedPhone) {
+          return { error: "Please enter a valid phone number." };
+        }
 
         const { data, error } = await supabase
           .from("profiles")
-          .update({ name: name.trim(), sdt: sdt.trim() || null })
+          .update({ name: name.trim(), sdt: normalizedPhone })
           .eq("id", user.id)
           .select("id, name, role, sdt, email")
           .single();
@@ -126,10 +217,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!user) return { error: "User is not authenticated" };
         if (!isSupabaseConfigured()) return { error: "Supabase is not configured." };
 
-        const { error } = await supabase.auth.updateUser(
+        const { data, error } = await supabase.auth.updateUser(
           { email: email.trim() },
-          { emailRedirectTo: `${window.location.origin}/` },
+          { emailRedirectTo: window.location.href },
         );
+        if (!error) setUser(data.user);
         return { error: error?.message ?? null };
       },
 
@@ -179,7 +271,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
       },
     };
-  }, [user, session, profile, loading, profileLoading, profileLoadedFor]);
+  }, [
+    user,
+    session,
+    profile,
+    loading,
+    profileLoading,
+    profileLoadedFor,
+    profileEditorOpen,
+    profileEditorRequiresPhone,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

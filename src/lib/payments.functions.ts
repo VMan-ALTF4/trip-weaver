@@ -2,10 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { normalizePhoneToE164 } from "@/lib/booking-profile";
 
 const paymentRequestSchema = z.object({
   orderId: z.string().uuid(),
-  paymentMethod: z.enum(["vnpay", "momo", "card", "bank_transfer"]),
+  paymentMethod: z.enum(["vnpay", "momo", "card", "bank_transfer", "paypal"]),
 });
 
 type PaymentRpcResult = {
@@ -65,6 +66,54 @@ export const confirmTicketPayment = createServerFn({ method: "POST" })
     ]);
 
     const adminClient = supabaseAdmin as unknown as SupabaseClient;
+    const { data: orderTickets, error: ticketsError } = await adminClient
+      .from("ticket")
+      .select("user_id, ticket_status")
+      .eq("order_id", data.orderId);
+
+    if (ticketsError) {
+      console.error("Unable to inspect ticket order before payment.");
+      throw new Error("Payment could not be confirmed. Please try again or contact support.");
+    }
+
+    const ownedOrderTickets = orderTickets ?? [];
+    const orderBelongsToUser =
+      ownedOrderTickets.length > 0 &&
+      ownedOrderTickets.every((ticket) => ticket.user_id === context.userId);
+    const orderAlreadySold =
+      orderBelongsToUser &&
+      ownedOrderTickets.every((ticket) => ticket.ticket_status === "sold");
+    const orderHasPendingTickets =
+      orderBelongsToUser &&
+      ownedOrderTickets.some((ticket) => ticket.ticket_status === "pending");
+
+    if (orderHasPendingTickets && !orderAlreadySold) {
+      const [
+        { data: profile, error: profileError },
+        { data: authUserData, error: authUserError },
+      ] = await Promise.all([
+        adminClient
+          .from("profiles")
+          .select("sdt")
+          .eq("id", context.userId)
+          .maybeSingle(),
+        adminClient.auth.admin.getUserById(context.userId),
+      ]);
+
+      if (profileError || authUserError) {
+        console.error("Unable to verify booking profile before payment.");
+        throw new Error("Payment could not be confirmed. Please try again or contact support.");
+      }
+
+      if (
+        !normalizePhoneToE164(profile?.sdt) ||
+        !authUserData.user?.email_confirmed_at ||
+        authUserData.user.new_email
+      ) {
+        throw new Error("PROFILE_INCOMPLETE");
+      }
+    }
+
     const { data: rpcData, error } = await adminClient.rpc("confirm_ticket_payment", {
       p_order_id: data.orderId,
       p_user_id: context.userId,

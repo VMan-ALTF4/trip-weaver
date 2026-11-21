@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -37,7 +37,9 @@ import { pickupPoints, transportLabels, type TransportType } from "@/lib/tat-dat
 import { saveDraft, type BookingDraft } from "@/lib/booking-store";
 import { useCurrency } from "@/lib/currency";
 import { useTourCatalog } from "@/lib/tour-catalog";
+import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/hooks/use-auth";
+import { isBookingProfileComplete } from "@/lib/booking-profile";
 import { supabase } from "@/integrations/supabase/client";
 import fallbackTourImage from "@/assets/hero-coast.jpg";
 
@@ -78,6 +80,65 @@ const seatRows = ["A", "B", "", "C", "D"];
 const seatNumbers = Array.from({ length: 9 }, (_, i) => i + 1);
 // pre-occupy some seats to simulate real-time availability
 const takenSeats = new Set(["A2", "B1", "C5", "D4", "A6", "B8", "C3", "A9", "B5"]);
+const PENDING_CHECKOUT_INTENT_KEY = "tat-pending-profile-checkout";
+
+type PendingCheckoutIntent = {
+  userId: string;
+  tourId: string;
+  passengers: number;
+  seats: string[];
+  pickup: string;
+  addons: Record<string, boolean>;
+};
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isBooleanRecord(value: unknown): value is Record<string, boolean> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Object.values(value).every((selected) => typeof selected === "boolean")
+  );
+}
+
+function parsePendingCheckoutIntent(value: string): PendingCheckoutIntent | null {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    const intent = parsed as Record<string, unknown>;
+    const userId = intent["userId"];
+    const tourId = intent["tourId"];
+    const passengers = intent["passengers"];
+    const seats = intent["seats"];
+    const pickup = intent["pickup"];
+    const addons = intent["addons"];
+    if (
+      typeof userId !== "string" ||
+      typeof tourId !== "string" ||
+      typeof passengers !== "number" ||
+      !Number.isInteger(passengers) ||
+      passengers < 1 ||
+      !isStringArray(seats) ||
+      typeof pickup !== "string" ||
+      !isBooleanRecord(addons)
+    ) {
+      return null;
+    }
+
+    return {
+      userId,
+      tourId,
+      passengers,
+      seats,
+      pickup,
+      addons,
+    };
+  } catch {
+    return null;
+  }
+}
 
 function getBookingErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -88,8 +149,32 @@ function getBookingErrorMessage(error: unknown): string {
   return "Unable to reserve a ticket. Please try again.";
 }
 
+function getPickupTimeFromTimeline(value: unknown): string | null {
+  if (!Array.isArray(value)) return null;
+
+  for (const entry of value) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const activity = entry as Record<string, unknown>;
+    const time = activity["time"];
+    const title = activity["title"];
+    if (typeof time !== "string" || typeof title !== "string") continue;
+
+    const normalizedTitle = title
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase()
+      .replace(/đ/g, "d");
+    if ((normalizedTitle.includes("don khach") || normalizedTitle.includes("pickup")) && /^\d{1,2}:\d{2}$/.test(time.trim())) {
+      return time.trim();
+    }
+  }
+
+  return null;
+}
+
 function TourDetailPage() {
   const { formatPrice } = useCurrency();
+  const { t } = useLanguage();
   const { activeTours, loading: toursLoading, error: toursError } = useTourCatalog();
   const { id } = Route.useParams();
   const { passengers: searchPassengers } = Route.useSearch();
@@ -97,15 +182,27 @@ function TourDetailPage() {
   const tourId = tour?.id;
   const tourTransport = tour?.transport;
   const navigate = useNavigate();
-  const { loading: authLoading } = useAuth();
+  const {
+    loading: authLoading,
+    profile,
+    profileLoading,
+    user,
+    openProfileEditor,
+    refreshAuthProfile,
+    profileEditorOpen,
+  } = useAuth();
 
   const [step, setStep] = useState(1);
   const [pax, setPax] = useState(searchPassengers ?? 1);
   const [seats, setSeats] = useState<string[]>([]);
   const [pickup, setPickup] = useState("");
+  const [pickupError, setPickupError] = useState(false);
   const [addons, setAddons] = useState<Record<string, boolean>>({});
   const [authOpen, setAuthOpen] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [checkoutIntentReady, setCheckoutIntentReady] = useState(false);
+  const resumeCheckoutAfterProfile = useRef(false);
+  const goCheckoutRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     setPax(searchPassengers ?? 1);
@@ -117,6 +214,60 @@ function TourDetailPage() {
       setPickup(tourTransport === "car" ? "" : pickupPoints[0]!.id);
     }
   }, [tourId, tourTransport]);
+
+  useEffect(() => {
+    if (!tourId || authLoading) return;
+    const rawIntent = window.sessionStorage.getItem(PENDING_CHECKOUT_INTENT_KEY);
+    if (rawIntent) {
+      const intent = parsePendingCheckoutIntent(rawIntent);
+      if (intent && intent.tourId === tourId && !user) {
+        setCheckoutIntentReady(true);
+        return;
+      }
+      if (intent && intent.tourId === tourId && intent.userId === user?.id) {
+        setPax(intent.passengers);
+        setSeats(intent.seats);
+        setPickup(intent.pickup);
+        setAddons(intent.addons);
+        resumeCheckoutAfterProfile.current = true;
+      } else {
+        window.sessionStorage.removeItem(PENDING_CHECKOUT_INTENT_KEY);
+      }
+    }
+    setCheckoutIntentReady(true);
+  }, [authLoading, tourId, user]);
+
+  useEffect(() => {
+    if (
+      !tourId ||
+      !checkoutIntentReady ||
+      !resumeCheckoutAfterProfile.current ||
+      booking ||
+      authLoading ||
+      profileLoading ||
+      !user
+    ) {
+      return;
+    }
+
+    if (isBookingProfileComplete(profile?.sdt, user.email_confirmed_at, user.new_email)) {
+      resumeCheckoutAfterProfile.current = false;
+      window.sessionStorage.removeItem(PENDING_CHECKOUT_INTENT_KEY);
+      void goCheckoutRef.current();
+    } else if (!profileEditorOpen) {
+      openProfileEditor({ requirePhone: true });
+    }
+  }, [
+    authLoading,
+    booking,
+    checkoutIntentReady,
+    openProfileEditor,
+    profile?.sdt,
+    profileEditorOpen,
+    profileLoading,
+    tourId,
+    user,
+  ]);
 
   if (!tour) {
     const message = toursLoading
@@ -142,6 +293,7 @@ function TourDetailPage() {
 
   const Icon = transportIcon[tour.transport];
   const timeline = tour.timeline?.length ? tour.timeline : tour.itinerary;
+  const timelinePickupTime = getPickupTimeFromTimeline(tour.timeline);
   const hasSeatSelection = tour.transport !== "car";
   const isPrivateVehicle = tour.transport === "car";
   const pickupStep = hasSeatSelection ? 3 : 2;
@@ -180,7 +332,7 @@ function TourDetailPage() {
   const subtotal = seatTotal + addonTotal + pickupFee;
 
   const goCheckout = async () => {
-    if (authLoading || booking) return;
+    if (authLoading || booking || !checkoutIntentReady) return;
     const currentTourId = tour.id.trim();
     if (!currentTourId) {
       toast.error("Unable to create a booking because this tour has no ID.");
@@ -214,10 +366,37 @@ function TourDetailPage() {
         return;
       }
 
+      const { user: refreshedUser, profile: currentProfile } = await refreshAuthProfile();
+      if (refreshedUser.id !== authenticatedUser.id) {
+        throw new Error("Your sign-in session changed. Please try again.");
+      }
+      if (
+        !isBookingProfileComplete(
+          currentProfile?.sdt,
+          refreshedUser.email_confirmed_at,
+          refreshedUser.new_email,
+        )
+      ) {
+        const intent: PendingCheckoutIntent = {
+          userId: refreshedUser.id,
+          tourId: currentTourId,
+          passengers: quantity,
+          seats,
+          pickup,
+          addons,
+        };
+        window.sessionStorage.setItem(PENDING_CHECKOUT_INTENT_KEY, JSON.stringify(intent));
+        resumeCheckoutAfterProfile.current = true;
+        openProfileEditor({ requirePhone: true });
+        return;
+      }
+
+      window.sessionStorage.removeItem(PENDING_CHECKOUT_INTENT_KEY);
+
       const client = supabase as unknown as SupabaseClient;
       const { data: currentTour, error: availabilityError } = await client
         .from("Tour")
-        .select("tour_id, available_slot, travel_date")
+        .select("tour_id, available_slot, travel_date, timeline")
         .eq("tour_id", currentTourId)
         .maybeSingle();
 
@@ -244,6 +423,11 @@ function TourDetailPage() {
         throw new Error("This tour has an invalid travel date. Please contact support.");
       }
 
+      const pickupTime = getPickupTimeFromTimeline(currentTour["timeline"]);
+      if (!pickupTime) {
+        throw new Error("This tour does not have a valid pickup time in its timeline. Please update the tour timeline.");
+      }
+
       const draft: BookingDraft = {
         tourId: currentTourId,
         tourTitle: tour.title,
@@ -254,7 +438,7 @@ function TourDetailPage() {
         seatPrice: tour.price,
         pickupId: selectedPickup?.id ?? "",
         pickupLabel: selectedPickup ? selectedPickup.label : pickup,
-        pickupTime: selectedPickup?.time ?? "",
+        pickupTime,
         pickupFee,
         addons: addonList.filter((a) => addons[a.id]),
         basePrice: tour.price,
@@ -274,6 +458,7 @@ function TourDetailPage() {
           passengers: 1,
           seat_numbers: seat ? [seat] : [],
           pickup_location: selectedPickup?.label ?? (pickup.trim() || null),
+          pickup_time: pickupTime,
           addons: selectedAddons.map(({ id, label }) => ({ id, label })),
         };
       });
@@ -305,6 +490,8 @@ function TourDetailPage() {
       setBooking(false);
     }
   };
+
+  goCheckoutRef.current = goCheckout;
 
   return (
     <div className="min-h-screen">
@@ -406,11 +593,11 @@ function TourDetailPage() {
               </div>
 
               {/* Step indicators */}
-              <div className="mt-5 flex items-center gap-2">
+              <div className="mt-5 flex items-start gap-2">
                 {stepLabels.map((label, index) => {
                   const stepNumber = index + 1;
                   return (
-                    <div key={label} className="flex-1">
+                    <div key={label} className="min-w-0 flex-1">
                       <div
                         className={`h-1 rounded-full ${stepNumber <= step ? "bg-primary" : "bg-border"}`}
                         aria-hidden
@@ -418,7 +605,7 @@ function TourDetailPage() {
                       <span
                         className={`mt-1 block text-[11px] ${stepNumber === step ? "font-semibold text-foreground" : "text-muted-foreground"}`}
                       >
-                        {stepNumber}. {label}
+                        {stepNumber}. {t(label)}
                       </span>
                     </div>
                   );
@@ -529,13 +716,23 @@ function TourDetailPage() {
                       <MapPin className="mr-1 inline size-3.5" aria-hidden /> Pickup point
                     </Label>
                     {isPrivateVehicle ? (
-                      <Input
-                        type="text"
-                        value={pickup}
-                        onChange={(event) => setPickup(event.target.value)}
-                        placeholder="Enter pickup address"
-                        className="h-11 rounded-xl"
-                      />
+                      <>
+                        <Input
+                          type="text"
+                          value={pickup}
+                          onChange={(event) => {
+                            setPickup(event.target.value);
+                            if (event.target.value.trim()) setPickupError(false);
+                          }}
+                          placeholder="Enter pickup address"
+                          className={`h-11 rounded-xl ${pickupError ? "border-destructive ring-1 ring-destructive" : ""}`}
+                        />
+                        {pickupError && (
+                          <p className="text-xs font-medium text-destructive">
+                            {t("Please enter the pickup address before continuing.")}
+                          </p>
+                        )}
+                      </>
                     ) : (
                       <select
                         value={pickup}
@@ -544,7 +741,7 @@ function TourDetailPage() {
                       >
                         {pickupPoints.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.label} · {p.time} ({p.note})
+                            {p.label}{timelinePickupTime ? ` · ${timelinePickupTime}` : ""} ({p.note})
                           </option>
                         ))}
                       </select>
@@ -562,7 +759,14 @@ function TourDetailPage() {
                     >
                       Back
                     </Button>
-                    <Button variant="cta" className="flex-1" onClick={() => setStep(addonsStep)}>
+                    <Button variant="cta" className="flex-1" onClick={() => {
+                        if (isPrivateVehicle && !pickup.trim()) {
+                          setPickupError(true);
+                          return;
+                        }
+                        setPickupError(false);
+                        setStep(addonsStep);
+                      }}>
                       Continue <ArrowRight className="size-4" aria-hidden />
                     </Button>
                   </div>
@@ -618,7 +822,7 @@ function TourDetailPage() {
                       variant="cta"
                       className="flex-1"
                       onClick={() => void goCheckout()}
-                      disabled={booking || authLoading}
+                      disabled={booking || authLoading || !checkoutIntentReady}
                     >
                       {booking ? (
                         <Loader2 className="size-4 animate-spin" aria-hidden />

@@ -156,7 +156,7 @@ function RootComponent() {
             <AuthProvider>
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
-              <Toaster richColors position="top-center" />
+              <Toaster richColors position="top-center" duration={5000} visibleToasts={1} />
             </AuthProvider>
           </TourCatalogProvider>
         </CurrencyProvider>

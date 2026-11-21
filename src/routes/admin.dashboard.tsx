@@ -30,6 +30,11 @@ import { getTourImageUrl } from "@/lib/tour-images";
 import { useLanguage } from "@/lib/language";
 import fallbackTourImage from "@/assets/hero-coast.jpg";
 import { useCurrency } from "@/lib/currency";
+import {
+  getAdminTicketStats,
+  type AdminRecentBooking,
+  type AdminTicketStats,
+} from "@/lib/admin-stats.functions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -182,13 +187,12 @@ function seatsPerVehicle(transport: string): number {
   return normalizeTourTransport(transport) === "car" ? 6 : 37;
 }
 
-const recentBookings = [
-  { id: "BK-2041", customer: "Nguyen V. A", tour: tours[0]!.title, amount: 178, status: "Paid" },
-  { id: "BK-2040", customer: "S. Tanaka", tour: tours[2]!.title, amount: 264, status: "Paid" },
-  { id: "BK-2039", customer: "M. Schmidt", tour: tours[4]!.title, amount: 152, status: "Pending" },
-  { id: "BK-2038", customer: "A. Rahman", tour: tours[1]!.title, amount: 108, status: "Paid" },
-  { id: "BK-2037", customer: "C. Lopez", tour: tours[5]!.title, amount: 94, status: "Refunded" },
-] as const;
+function percentageDelta(current: number, previous: number): string | undefined {
+  if (previous <= 0) return undefined;
+  const percentage = ((current - previous) / previous) * 100;
+  if (!Number.isFinite(percentage)) return undefined;
+  return `${percentage > 0 ? "+" : ""}${percentage.toFixed(1)}%`;
+}
 
 function AdminPage() {
   const { user, profile, loading, profileLoading } = useAuth();
@@ -217,8 +221,37 @@ function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("Tours & Catalog");
   const [activeTourCount, setActiveTourCount] = useState<number | null>(null);
   const [tourStatsRevision, setTourStatsRevision] = useState(0);
+  const [ticketStats, setTicketStats] = useState<AdminTicketStats | null>(null);
+  const [ticketStatsLoading, setTicketStatsLoading] = useState(true);
+  const [ticketStatsFailed, setTicketStatsFailed] = useState(false);
   const { t: translate } = useLanguage();
   const { formatPrice } = useCurrency();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTicketStats() {
+      setTicketStatsLoading(true);
+      setTicketStatsFailed(false);
+      try {
+        const stats = await getAdminTicketStats({ data: {} });
+        if (!cancelled) setTicketStats(stats);
+      } catch (error) {
+        console.error("[admin-dashboard] Unable to load ticket statistics.", error);
+        if (!cancelled) {
+          setTicketStats(null);
+          setTicketStatsFailed(true);
+        }
+      } finally {
+        if (!cancelled) setTicketStatsLoading(false);
+      }
+    }
+
+    void loadTicketStats();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,8 +271,25 @@ function AdminDashboard() {
   }, [tourStatsRevision]);
 
   const stats = [
-    { label: translate("Total bookings"), value: "1,284", delta: "+12.4%", Icon: Ticket },
-    { label: translate("Revenue (30d)"), value: formatPrice(86420), delta: "+8.1%", Icon: DollarSign },
+    {
+      label: translate("Tickets sold"),
+      value: ticketStatsLoading || !ticketStats ? "—" : String(ticketStats.totalSoldCount),
+      delta: ticketStats
+        ? percentageDelta(ticketStats.current30DaySoldCount, ticketStats.previous30DaySoldCount)
+        : undefined,
+      Icon: Ticket,
+    },
+    {
+      label: translate("Revenue (30d)"),
+      value:
+        ticketStatsLoading || !ticketStats
+          ? "—"
+          : formatPrice(Number(ticketStats.current30DayRevenue)),
+      delta: ticketStats
+        ? percentageDelta(ticketStats.current30DayRevenue, ticketStats.previous30DayRevenue)
+        : undefined,
+      Icon: DollarSign,
+    },
     { label: translate("Seat utilization"), value: "87%", delta: "+3.2pts", Icon: Bus },
     { label: translate("Active tours"), value: activeTourCount === null ? "—" : String(activeTourCount), Icon: LayoutDashboard },
   ];
@@ -295,7 +345,13 @@ function AdminDashboard() {
             <ToursTab onToursChanged={() => setTourStatsRevision((revision) => revision + 1)} />
           )}
           {tab === "Transport & Providers" && <TransportTab />}
-          {tab === "Bookings & Revenue" && <BookingsTab />}
+          {tab === "Bookings & Revenue" && (
+            <BookingsTab
+              recentBookings={ticketStats?.recentBookings ?? []}
+              loading={ticketStatsLoading}
+              failed={ticketStatsFailed}
+            />
+          )}
           {tab === "Users & Security" && <UsersTab />}
         </div>
       </main>
@@ -1008,7 +1064,15 @@ function TransportTab() {
   );
 }
 
-function BookingsTab() {
+function BookingsTab({
+  recentBookings,
+  loading,
+  failed,
+}: {
+  recentBookings: AdminRecentBooking[];
+  loading: boolean;
+  failed: boolean;
+}) {
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
 
@@ -1031,24 +1095,42 @@ function BookingsTab() {
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {recentBookings.map((b) => (
-            <tr key={b.id} className="hover:bg-secondary/30">
-              <td className="px-4 py-3 font-mono text-xs">{b.id}</td>
-              <td className="px-4 py-3">{b.customer}</td>
-              <td className="px-4 py-3 text-muted-foreground">{b.tour}</td>
-              <td className="px-4 py-3">{formatPrice(b.amount)}</td>
-              <td className="px-4 py-3">
-                <Badge
-                  variant="outline"
-                  className={
-                    b.status === "Paid" ? "bg-teal/10 text-teal" : b.status === "Pending" ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"
-                  }
-                >
-                  {t(b.status)}
-                </Badge>
+          {loading && (
+            <tr>
+              <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                {t("Loading recent bookings...")}
               </td>
             </tr>
-          ))}
+          )}
+          {!loading && failed && (
+            <tr>
+              <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                —
+              </td>
+            </tr>
+          )}
+          {!loading && !failed && recentBookings.length === 0 && (
+            <tr>
+              <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                {t("No sold tickets found.")}
+              </td>
+            </tr>
+          )}
+          {!loading &&
+            !failed &&
+            recentBookings.map((b) => (
+              <tr key={b.key} className="hover:bg-secondary/30">
+                <td className="px-4 py-3 font-mono text-xs">#{b.id}</td>
+                <td className="px-4 py-3">{b.customer}</td>
+                <td className="px-4 py-3 text-muted-foreground">{b.tour}</td>
+                <td className="px-4 py-3">{formatPrice(Number(b.amount))}</td>
+                <td className="px-4 py-3">
+                  <Badge variant="outline" className="bg-teal/10 text-teal">
+                    {t("Paid")}
+                  </Badge>
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
     </div>

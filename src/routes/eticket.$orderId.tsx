@@ -25,7 +25,9 @@ type TicketView = {
   ticket_issue_status: "pending_issue" | "issued" | null;
   travel_date: string | null;
   pickup_location: string | null;
+  pickup_time: string | null;
   seat_numbers: string[];
+  transport: "bus" | "car" | "train";
   price: number;
   created_at: string;
   eticket: {
@@ -56,6 +58,20 @@ type TicketView = {
     created_at: string;
   }>;
 };
+
+type TicketStatus = "valid" | "cancelled" | "expired" | "unused" | "used";
+
+const ticketStatusLabels: Record<TicketStatus, string> = {
+  valid: "Valid",
+  cancelled: "Cancelled",
+  expired: "Expired",
+  unused: "Unused",
+  used: "Used",
+};
+
+function getTicketStatusLabel(status: TicketStatus, translate: (text: string) => string) {
+  return translate(ticketStatusLabels[status]);
+}
 
 function EticketPage() {
   const { t } = useLanguage();
@@ -304,14 +320,24 @@ function EticketPage() {
                       <div className="grid gap-3 md:grid-cols-2">
                         <InfoRow Icon={CalendarDays} label={t("Travel date")} value={ticket.eticket.travel_date || "—"} />
                         <InfoRow Icon={MapPin} label={t("Pickup point")} value={ticket.eticket.pickup_location || "—"} />
+                        {ticket.transport !== "car" && (
+                          <InfoRow
+                            Icon={Ticket}
+                            label={t("Seat")}
+                            value={ticket.eticket.seat_no ?? (ticket.seat_numbers.length ? ticket.seat_numbers.join(", ") : "—")}
+                          />
+                        )}
+                        <InfoRow
+                          Icon={Clock3}
+                          label={t("Pickup time")}
+                          value={ticket.eticket.pickup_time || ticket.pickup_time || "—"}
+                        />
+                        <InfoRow Icon={UserRound} label={t("Traveller")} value={ticket.eticket.holder_name || "—"} />
                         <InfoRow
                           Icon={Ticket}
-                          label={t("Seat")}
-                          value={ticket.eticket.seat_no ?? (ticket.seat_numbers.length ? ticket.seat_numbers.join(", ") : "—")}
+                          label={t("Status")}
+                          value={getTicketStatusLabel(ticket.eticket.status, t)}
                         />
-                        <InfoRow Icon={Clock3} label={t("Pickup time")} value={ticket.eticket.pickup_time || "—"} />
-                        <InfoRow Icon={UserRound} label={t("Traveller")} value={ticket.eticket.holder_name || "—"} />
-                        <InfoRow Icon={Ticket} label={t("Status")} value={ticket.eticket.status} />
                       </div>
 
                       <div className="rounded-2xl border border-border bg-secondary/20 p-4">
@@ -323,11 +349,13 @@ function EticketPage() {
                             {ticket.segments.map((segment) => (
                               <li key={segment.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2">
                                 <span>
-                                  {segment.kind === "transport" ? t("Transport") : t("Attraction")}
+                                  {segment.kind === "transport"
+                                    ? `${t("Transport")} · ${t(ticket.transport === "bus" ? "Coach / Bus" : ticket.transport === "car" ? "Car" : "Train")}`
+                                    : t("Attraction")}
                                   {segment.label ? ` · ${segment.label}` : ""}
                                 </span>
                                 <span className="rounded-full border border-border px-2 py-1 text-[10px] uppercase tracking-wide">
-                                  {segment.status}
+                                  {getTicketStatusLabel(segment.status, t)}
                                 </span>
                               </li>
                             ))}

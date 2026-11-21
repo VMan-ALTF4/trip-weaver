@@ -27,14 +27,23 @@ export class EticketViewError extends Error {
 interface TicketRow {
   id: string;
   order_id: string;
+  tour_id: string;
   user_id: string;
   ticket_status: "pending" | "sold" | "expired" | "cancelled";
   ticket_issue_status: "pending_issue" | "issued" | null;
   travel_date: string | null;
   pickup_location: string | null;
+  pickup_time: string | null;
   seat_numbers: string[] | null;
   price: number;
   created_at: string;
+}
+
+type TicketTransport = "bus" | "car" | "train";
+
+interface TourTransportRow {
+  tour_id: string | number;
+  transport: TicketTransport;
 }
 
 interface EticketRow {
@@ -76,6 +85,10 @@ interface TicketQuery extends PromiseLike<DatabaseResult> {
   order(column: "created_at", options: { ascending: boolean }): TicketQuery;
 }
 
+interface TourQuery extends PromiseLike<DatabaseResult> {
+  in(column: "tour_id", values: string[]): TourQuery;
+}
+
 interface EticketQuery extends PromiseLike<DatabaseResult> {
   eq(column: "ticket_id" | "id", value: string): EticketQuery;
   in(column: "ticket_id", values: string[]): EticketQuery;
@@ -89,12 +102,19 @@ interface TicketDatabase {
   from(table: "ticket"): {
     select(columns: string): TicketQuery;
   };
+  from(table: "Tour"): {
+    select(columns: string): TourQuery;
+  };
   from(table: "eticket"): {
     select(columns: string): EticketQuery;
   };
   from(table: "eticket_segment"): {
     select(columns: string): EticketSegmentQuery;
   };
+}
+
+function isTicketTransport(value: unknown): value is TicketTransport {
+  return value === "bus" || value === "car" || value === "train";
 }
 
 function isTicketRows(value: unknown): value is TicketRow[] {
@@ -104,14 +124,27 @@ function isTicketRows(value: unknown): value is TicketRow[] {
     return (
       typeof item["id"] === "string" &&
       typeof item["order_id"] === "string" &&
+      typeof item["tour_id"] === "string" &&
       typeof item["user_id"] === "string" &&
       (item["ticket_status"] === "pending" || item["ticket_status"] === "sold" || item["ticket_status"] === "expired" || item["ticket_status"] === "cancelled") &&
       (item["ticket_issue_status"] === null || item["ticket_issue_status"] === "pending_issue" || item["ticket_issue_status"] === "issued") &&
       (typeof item["travel_date"] === "string" || item["travel_date"] === null) &&
       (typeof item["pickup_location"] === "string" || item["pickup_location"] === null) &&
+      (typeof item["pickup_time"] === "string" || item["pickup_time"] === null) &&
       (Array.isArray(item["seat_numbers"]) || item["seat_numbers"] === null) &&
       typeof item["price"] === "number" &&
       typeof item["created_at"] === "string"
+    );
+  });
+}
+
+function isTourTransportRows(value: unknown): value is TourTransportRow[] {
+  return Array.isArray(value) && value.every((row) => {
+    if (typeof row !== "object" || row === null) return false;
+    const item = row as Record<string, unknown>;
+    return (
+      (typeof item["tour_id"] === "string" || (typeof item["tour_id"] === "number" && Number.isFinite(item["tour_id"]))) &&
+      isTicketTransport(item["transport"])
     );
   });
 }
@@ -171,7 +204,7 @@ export const getOrderEtickets = createServerFn({ method: "POST" })
     const database = supabaseAdmin as unknown as TicketDatabase;
     const { data: ticketRows, error: ticketError } = await database
       .from("ticket")
-      .select("id, order_id, user_id, ticket_status, ticket_issue_status, travel_date, pickup_location, seat_numbers, price, created_at")
+      .select("id, order_id, tour_id, user_id, ticket_status, ticket_issue_status, travel_date, pickup_location, pickup_time, seat_numbers, price, created_at")
       .eq("order_id", data.orderId);
 
     if (ticketError) {
@@ -198,6 +231,40 @@ export const getOrderEtickets = createServerFn({ method: "POST" })
         ticketOwners: ticketRows.map((item) => item.user_id),
       });
       throw new EticketViewError("forbidden", "You do not have permission to view this e-ticket.");
+    }
+
+    const tourIds = [...new Set(ticketRows.map((ticket) => ticket.tour_id))];
+    const { data: tourRows, error: tourError } = await database
+      .from("Tour")
+      .select("tour_id, transport")
+      .in("tour_id", tourIds);
+
+    if (tourError) {
+      console.error("[eticket-view] Unable to load tour transport types.", {
+        orderId: data.orderId,
+        userId: context.userId,
+        error: tourError,
+      });
+      throw new EticketViewError("system", "The e-ticket could not be loaded due to a system error.");
+    }
+
+    if (!isTourTransportRows(tourRows)) {
+      console.error("[eticket-view] Invalid tour transport payload from database.", {
+        orderId: data.orderId,
+        userId: context.userId,
+        rows: tourRows,
+      });
+      throw new EticketViewError("system", "The e-ticket data returned by the server was invalid.");
+    }
+
+    const transportByTourId = new Map(tourRows.map((tour) => [String(tour.tour_id), tour.transport]));
+    if (tourIds.some((tourId) => !transportByTourId.has(tourId))) {
+      console.error("[eticket-view] A booked tour has no transport type.", {
+        orderId: data.orderId,
+        userId: context.userId,
+        tourIds,
+      });
+      throw new EticketViewError("system", "The e-ticket data returned by the server was incomplete.");
     }
 
     const soldTickets = ticketRows.filter((item) => item.ticket_status === "sold");
@@ -330,7 +397,9 @@ export const getOrderEtickets = createServerFn({ method: "POST" })
             ticket_issue_status: ticket.ticket_issue_status,
             travel_date: ticket.travel_date,
             pickup_location: ticket.pickup_location,
+            pickup_time: ticket.pickup_time,
             seat_numbers: ticket.seat_numbers ?? [],
+            transport: transportByTourId.get(ticket.tour_id)!,
             price: ticket.price,
             created_at: ticket.created_at,
             eticket: eticket

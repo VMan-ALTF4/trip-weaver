@@ -1,6 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { Compass, Globe, Menu, Coins, LogIn, LogOut, LayoutDashboard, Pencil } from "lucide-react";
-import { useState } from "react";
+import {
+  Check,
+  Circle,
+  Compass,
+  Globe,
+  Menu,
+  Coins,
+  LogIn,
+  LogOut,
+  LayoutDashboard,
+  Pencil,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AuthDialog, type AuthMode } from "@/components/auth/auth-dialog";
 import { Button } from "@/components/ui/button";
@@ -17,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
+import { isBookingProfileComplete, normalizePhoneToE164 } from "@/lib/booking-profile";
 import { currencies, useCurrency } from "@/lib/currency";
 import { useLanguage, type Language } from "@/lib/language";
 
@@ -29,15 +41,29 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
-  const [profileOpen, setProfileOpen] = useState(false);
   const [profileName, setProfileName] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
   const [profileEmail, setProfileEmail] = useState("");
   const [profileError, setProfileError] = useState<string | null>(null);
-  const [emailNotice, setEmailNotice] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [emailChangePending, setEmailChangePending] = useState(false);
+  const [pendingEmailAddress, setPendingEmailAddress] = useState<string | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
-  const { user, profile, profileLoading, displayName, loading, signOut, updateProfile, requestEmailChange } = useAuth();
+  const {
+    user,
+    profile,
+    profileLoading,
+    displayName,
+    loading,
+    signOut,
+    updateProfile,
+    requestEmailChange,
+    profileEditorOpen,
+    profileEditorRequiresPhone,
+    openProfileEditor: requestProfileEditor,
+    closeProfileEditor,
+  } = useAuth();
   const isAdmin = Boolean(
     user && !profileLoading && profile?.id === user.id && profile.role === "admin",
   );
@@ -47,6 +73,30 @@ export function SiteHeader() {
     { value: "en", label: "English" },
     { value: "vi", label: "Tiếng Việt" },
   ];
+
+  useEffect(() => {
+    if (user?.new_email) {
+      setEmailChangePending(true);
+      setPendingEmailAddress(user.new_email);
+      setProfileEmail(user.new_email);
+    } else if (
+      user?.email_confirmed_at &&
+      pendingEmailAddress &&
+      user.email?.toLocaleLowerCase() === pendingEmailAddress.toLocaleLowerCase()
+    ) {
+      setEmailChangePending(false);
+      setPendingEmailAddress(null);
+    }
+  }, [pendingEmailAddress, user?.email, user?.email_confirmed_at, user?.new_email]);
+
+  useEffect(() => {
+    if (!profileEditorOpen) return;
+    setProfileName(profile?.name ?? displayName);
+    setProfilePhone(profile?.sdt ?? "");
+    setProfileEmail(user?.new_email ?? pendingEmailAddress ?? user?.email ?? "");
+    setProfileError(null);
+    setPhoneError(null);
+  }, [displayName, pendingEmailAddress, profile?.name, profile?.sdt, profileEditorOpen, user?.email, user?.id, user?.new_email]);
 
   function openAuth(mode: AuthMode) {
     setAuthMode(mode);
@@ -63,10 +113,10 @@ export function SiteHeader() {
   function openProfileEditor() {
     setProfileName(profile?.name ?? displayName);
     setProfilePhone(profile?.sdt ?? "");
-    setProfileEmail(user?.email ?? "");
+    setProfileEmail(user?.new_email ?? pendingEmailAddress ?? user?.email ?? "");
     setProfileError(null);
-    setEmailNotice(null);
-    setProfileOpen(true);
+    setPhoneError(null);
+    requestProfileEditor();
     setOpen(false);
   }
 
@@ -76,13 +126,46 @@ export function SiteHeader() {
       return;
     }
 
+    const normalizedPhone = normalizePhoneToE164(profilePhone);
+    if (profileEditorRequiresPhone && !normalizedPhone) {
+      setPhoneError(
+        profilePhone.trim()
+          ? t("Enter a valid phone number. Use a valid Vietnamese mobile prefix or international E.164 format.")
+          : t("Phone number is required to continue to payment."),
+      );
+      return;
+    }
+    if (profilePhone.trim() && !normalizedPhone) {
+      setPhoneError(
+        t("Enter a valid phone number. Use a valid Vietnamese mobile prefix or international E.164 format."),
+      );
+      return;
+    }
+
     setProfileSaving(true);
     setProfileError(null);
+    setPhoneError(null);
     try {
       const { error } = await updateProfile(profileName, profilePhone);
-      if (error) setProfileError(error);
-      else {
-        setProfileOpen(false);
+      if (error) {
+        if (error === "Please enter a valid phone number.") {
+          setPhoneError(
+            t("Enter a valid phone number. Use a valid Vietnamese mobile prefix or international E.164 format."),
+          );
+        } else {
+          setProfileError(error);
+        }
+      } else if (
+        profileEditorRequiresPhone &&
+        !isBookingProfileComplete(
+          normalizedPhone,
+          user?.email_confirmed_at,
+          user?.new_email,
+        )
+      ) {
+        toast.success(t("Phone number saved. Verify your email to continue."));
+      } else {
+        closeProfileEditor();
         toast.success(t("Profile updated."));
       }
     } catch (error) {
@@ -101,11 +184,13 @@ export function SiteHeader() {
 
     setEmailSending(true);
     setProfileError(null);
-    setEmailNotice(null);
     try {
       const { error } = await requestEmailChange(profileEmail);
       if (error) setProfileError(error);
-      else setEmailNotice(t("Supabase sent a confirmation link. Your email changes only after verification."));
+      else {
+        setEmailChangePending(true);
+        setPendingEmailAddress(profileEmail.trim());
+      }
     } catch (error) {
       setProfileError(error instanceof Error ? error.message : t("Unable to request an email change."));
     } finally {
@@ -334,12 +419,46 @@ export function SiteHeader() {
         mode={authMode}
         onModeChange={setAuthMode}
       />
-      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+      <Dialog
+        open={profileEditorOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) closeProfileEditor();
+        }}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("Edit profile")}</DialogTitle>
             <DialogDescription>{t("Update your personal details and manage your sign-in email.")}</DialogDescription>
           </DialogHeader>
+
+          {profileEditorRequiresPhone && (
+            <div className="grid gap-3 rounded-lg border border-accent/40 bg-accent/10 p-3">
+              <p className="text-sm font-medium">
+                {t("Please add a phone number and verify your email before payment.")}
+              </p>
+              <ul className="grid gap-2 text-sm">
+                {[
+                  {
+                    label: t("Phone number"),
+                    complete: Boolean(normalizePhoneToE164(profile?.sdt)),
+                  },
+                  {
+                    label: t("Verified email"),
+                    complete: Boolean(user?.email_confirmed_at && !user?.new_email),
+                  },
+                ].map((item) => (
+                  <li key={item.label} className="flex items-center gap-2">
+                    {item.complete ? (
+                      <Check className="size-4 text-green-700" aria-hidden />
+                    ) : (
+                      <Circle className="size-4 text-muted-foreground" aria-hidden />
+                    )}
+                    <span>{item.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {profileError && <p role="alert" className="text-sm text-destructive">{profileError}</p>}
 
@@ -349,8 +468,28 @@ export function SiteHeader() {
               <Input id="profile-name" value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={120} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="profile-phone">{t("Phone number")}</Label>
-              <Input id="profile-phone" type="tel" value={profilePhone} onChange={(event) => setProfilePhone(event.target.value)} maxLength={40} />
+              <Label htmlFor="profile-phone">
+                {t("Phone number")}
+                {profileEditorRequiresPhone ? " *" : ""}
+              </Label>
+              <Input
+                id="profile-phone"
+                type="tel"
+                value={profilePhone}
+                onChange={(event) => {
+                  setProfilePhone(event.target.value);
+                  setPhoneError(null);
+                }}
+                maxLength={40}
+                required={profileEditorRequiresPhone}
+                aria-invalid={Boolean(phoneError)}
+                aria-describedby={phoneError ? "profile-phone-error" : undefined}
+              />
+              {phoneError && (
+                <p id="profile-phone-error" role="alert" className="text-sm text-destructive">
+                  {phoneError}
+                </p>
+              )}
             </div>
             <DialogFooter>
               <Button type="button" onClick={() => void saveProfile()} disabled={profileSaving || profileLoading}>
@@ -374,10 +513,21 @@ export function SiteHeader() {
                 onChange={(event) => setProfileEmail(event.target.value)}
               />
             </div>
-            {emailNotice && <p role="status" className="text-sm text-muted-foreground">{emailNotice}</p>}
+            {emailChangePending && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {t("A new email verification is pending. Open your inbox and click the link.")}
+              </p>
+            )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => void sendEmailConfirmation()} disabled={emailSending || !profileEmail.trim()}>
-                {emailSending ? t("Sending...") : t("Send confirmation")}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void sendEmailConfirmation()}
+                disabled={emailSending || !profileEmail.trim()}
+              >
+                {emailSending
+                  ? t("Sending...")
+                  : t(emailChangePending ? "Resend confirmation" : "Send confirmation")}
               </Button>
             </DialogFooter>
           </div>

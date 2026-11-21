@@ -2,14 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import {
   ArrowRight,
-  Car,
   MapPinned,
   Route as RouteIcon,
   Search,
   ShieldCheck,
   Sparkles,
   Ticket,
-  TrainFront,
   Wallet,
 } from "lucide-react";
 import heroImage from "@/assets/hero-coast.jpg";
@@ -257,32 +255,6 @@ function HomePage() {
           </div>
         </section>
 
-        {/* CTA strip */}
-        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-          <div className="grid grid-cols-1 items-center gap-6 rounded-2xl surface-brand p-8 text-primary-foreground sm:p-12 lg:grid-cols-[minmax(0,1fr)_auto]">
-            <div className="min-w-0">
-              <h2 className="font-display text-2xl font-extrabold sm:text-3xl">
-                Plan the whole trip in under two minutes
-              </h2>
-              <p className="mt-2 max-w-xl text-sm text-primary-foreground/80">
-                Choose a route, lock your seat, add venue tickets and pay with VNPay, Momo, card or
-                bank QR.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild variant="cta" size="lg">
-                <Link to="/tours">
-                  <Car className="size-4" aria-hidden /> Browse routes
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/booking/success">
-                  <TrainFront className="size-4" aria-hidden /> See a sample e-ticket
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
       </main>
 
       <SiteFooter />

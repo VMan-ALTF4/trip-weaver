@@ -10,16 +10,20 @@ import {
   Timer,
   Wallet,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SiteFooter } from "@/components/site/footer";
 import { SiteHeader } from "@/components/site/header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { isBookingProfileComplete } from "@/lib/booking-profile";
 import { supabase } from "@/integrations/supabase/client";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, type Currency } from "@/lib/currency";
 import { useLanguage } from "@/lib/language";
 import { closeTicketOrder, confirmTicketPayment } from "@/lib/payments.functions";
+import vnpayLogo from "@/assets/payments/vnpay.png";
+import momoLogo from "@/assets/payments/momo.png";
+import paypalLogo from "@/assets/payments/paypal.png";
 
 const HOLD_DURATION_MS = 10 * 60 * 1000;
 
@@ -37,12 +41,55 @@ type Ticket = {
   created_at: string;
 };
 
-const paymentMethods = [
-  { id: "vnpay", label: "VNPay", Icon: Wallet },
-  { id: "momo", label: "Momo", Icon: Wallet },
-  { id: "card", label: "Credit / Debit Card", Icon: CreditCard },
-  { id: "bank_transfer", label: "Bank Transfer", Icon: Building2 },
-] as const;
+export type PaymentMethodId = "vnpay" | "momo" | "card" | "bank_transfer" | "paypal";
+
+type PaymentMethodOption = {
+  id: PaymentMethodId;
+  label: string;
+  logo?: string;
+  Icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
+};
+
+const paymentMethodsByCurrency: Record<Currency, readonly PaymentMethodOption[]> = {
+  VND: [
+    { id: "vnpay", label: "VNPay", logo: vnpayLogo, Icon: Wallet },
+    { id: "momo", label: "Momo", logo: momoLogo, Icon: Wallet },
+    { id: "card", label: "Credit / Debit Card", Icon: CreditCard },
+    { id: "bank_transfer", label: "Bank Transfer", Icon: Building2 },
+  ],
+  USD: [
+    { id: "paypal", label: "PayPal", logo: paypalLogo, Icon: Wallet },
+    { id: "card", label: "Credit / Debit Card", Icon: CreditCard },
+    { id: "bank_transfer", label: "Bank Transfer", Icon: Building2 },
+  ],
+};
+
+function PaymentMethodIcon({
+  label,
+  logo,
+  Icon,
+}: {
+  label: string;
+  logo?: string;
+  Icon: PaymentMethodOption["Icon"];
+}) {
+  return (
+    <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-border bg-white p-0.5">
+      {logo ? (
+        <img
+          src={logo}
+          alt={label}
+          width={24}
+          height={24}
+          loading="lazy"
+          className="h-full w-full object-contain"
+        />
+      ) : (
+        <Icon className="size-4" aria-hidden />
+      )}
+    </span>
+  );
+}
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -62,7 +109,7 @@ export const Route = createFileRoute("/checkout")({
       { title: "Checkout — TAT Booking" },
       {
         name: "description",
-        content: "Review your booking and pay with VNPay, Momo, card or bank transfer.",
+        content: "Review your booking and pay with VNPay, Momo, Paypal, card or bank transfer.",
       },
     ],
   }),
@@ -71,8 +118,15 @@ export const Route = createFileRoute("/checkout")({
 
 function CheckoutPage() {
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency();
-  const { user, loading: authLoading } = useAuth();
+  const { currency, formatPrice } = useCurrency();
+  const {
+    user,
+    profile,
+    loading: authLoading,
+    profileLoading,
+    openProfileEditor,
+    refreshAuthProfile,
+  } = useAuth();
   const navigate = useNavigate();
   const {
     order_id: searchOrderId,
@@ -83,16 +137,26 @@ function CheckoutPage() {
     () => [...new Set(searchTicketIds ?? (ticketId ? [ticketId] : []))],
     [searchTicketIds, ticketId],
   );
+  const availableMethods = useMemo(
+    () => paymentMethodsByCurrency[currency] ?? paymentMethodsByCurrency.VND,
+    [currency],
+  );
   const [orderId, setOrderId] = useState(searchOrderId ?? "");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const ticket = tickets[0] ?? null;
   const [tourTitle, setTourTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [method, setMethod] = useState<(typeof paymentMethods)[number]["id"]>("vnpay");
+  const [method, setMethod] = useState<PaymentMethodId>(() => {
+    return currency === "USD" ? "paypal" : "vnpay";
+  });
   const [remaining, setRemaining] = useState(0);
-  const preserveTicketRef = useRef(false);
-  const routeMountedRef = useRef(false);
+
+  useEffect(() => {
+    if (!availableMethods.some((item) => item.id === method)) {
+      setMethod(availableMethods[0]?.id ?? "card");
+    }
+  }, [availableMethods, method]);
 
   const client = supabase as unknown as SupabaseClient;
 
@@ -111,14 +175,14 @@ function CheckoutPage() {
     if (!user) {
       setLoading(false);
       if (searchOrderId || ticketIds.length) {
-        toast.error("Please sign in again to access this booking.");
+        toast.error(t("Please sign in again to access this booking."));
         void navigate({ to: "/tours", replace: true });
       }
       return;
     }
     if (!searchOrderId && !ticketIds.length) {
       setLoading(false);
-      toast.error("The checkout link is missing its ticket ID.");
+      toast.error(t("The checkout link is missing its ticket ID."));
       void navigate({ to: "/tours", replace: true });
       return;
     }
@@ -139,7 +203,7 @@ function CheckoutPage() {
         if (error) throw error;
         if (!data || (!searchOrderId && data.length !== ticketIds.length) || data.length === 0) {
           if (active) {
-            toast.error("One or more tickets are no longer available.");
+            toast.error(t("One or more tickets are no longer available."));
             void navigate({ to: "/tours", replace: true });
           }
           return;
@@ -152,7 +216,7 @@ function CheckoutPage() {
         }
         if (loadedTickets.some((item) => item.ticket_status !== "pending")) {
           if (active) {
-            toast.error("One or more tickets are no longer awaiting payment.");
+            toast.error(t("One or more tickets are no longer awaiting payment."));
             void navigate({ to: "/my-bookings", replace: true });
           }
           return;
@@ -163,7 +227,7 @@ function CheckoutPage() {
         if (!Number.isFinite(createdAt) || createdAt + HOLD_DURATION_MS <= Date.now()) {
           const result = await transitionTicket(currentOrderId, "expired");
           if (active && result === "expired") {
-            toast.error("Đã hết thời gian giữ vé.");
+            toast.error(t("Hold expired"));
             void navigate({ to: "/my-bookings", replace: true });
             return;
           }
@@ -185,7 +249,7 @@ function CheckoutPage() {
       } catch (error) {
         console.error("Unable to load checkout ticket:", error);
         if (active) {
-          toast.error(error instanceof Error ? error.message : "Unable to load this booking.");
+          toast.error(error instanceof Error ? error.message : t("Unable to load this booking."));
           void navigate({ to: "/tours", replace: true });
         }
       } finally {
@@ -197,64 +261,36 @@ function CheckoutPage() {
     return () => {
       active = false;
     };
-  }, [authLoading, client, navigate, searchOrderId, ticketIds, transitionTicket, user]);
-
-  useEffect(() => {
-    if (!ticket || ticket.ticket_status !== "pending" || !user || !orderId) {
-      routeMountedRef.current = false;
-      return;
-    }
-
-    routeMountedRef.current = true;
-    return () => {
-      routeMountedRef.current = false;
-      window.setTimeout(() => {
-        if (routeMountedRef.current || preserveTicketRef.current) return;
-        void transitionTicket(orderId, "cancelled").catch((error: unknown) => {
-          console.error("Unable to cancel ticket after leaving checkout:", error);
-          toast.error("Unable to cancel your ticket. It will expire automatically.");
-        });
-      }, 0);
-    };
-  }, [orderId, ticket, transitionTicket, user]);
+  }, [authLoading, client, navigate, searchOrderId, t, ticketIds, transitionTicket, user]);
 
   const finishTicket = useCallback(
     async (status: "expired" | "cancelled") => {
       if (!ticket || !user || !orderId || busy) return;
-      preserveTicketRef.current = true;
       setBusy(true);
       try {
         const finalStatus = await transitionTicket(orderId, status);
         if (finalStatus === "pending") {
-          preserveTicketRef.current = false;
-          toast.error("The hold has not expired yet. Please try again shortly.");
+          toast.error(t("The hold has not expired yet. Please try again shortly."), {
+            id: "checkout-hold-not-expired",
+            duration: 5000,
+          });
           return;
         }
         if (finalStatus === "expired") {
-          toast.success("Đã hết thời gian giữ vé.");
+          toast.success(t("Hold expired"));
         } else if (finalStatus === "cancelled") {
-          toast.success("Ticket hold cancelled.");
+          toast.success(t("Ticket hold cancelled."));
         }
         await navigate({ to: "/my-bookings", replace: true });
       } catch (error) {
-        preserveTicketRef.current = false;
         console.error("Unable to update ticket status:", error);
-        toast.error(error instanceof Error ? error.message : "Unable to update this ticket.");
+        toast.error(error instanceof Error ? error.message : t("Unable to update this ticket."));
       } finally {
         setBusy(false);
       }
     },
-    [busy, navigate, orderId, ticket, transitionTicket, user],
+    [busy, navigate, orderId, t, ticket, transitionTicket, user],
   );
-
-  useEffect(() => {
-    if (!ticket || ticket.ticket_status !== "pending") return;
-    const handleBrowserBack = () => {
-      void finishTicket("cancelled");
-    };
-    window.addEventListener("popstate", handleBrowserBack);
-    return () => window.removeEventListener("popstate", handleBrowserBack);
-  }, [finishTicket, ticket]);
 
   useEffect(() => {
     if (!ticket || ticket.ticket_status !== "pending") return;
@@ -273,6 +309,14 @@ function CheckoutPage() {
 
   const pay = async () => {
     if (!ticket || !user || !orderId || busy) return;
+    if (
+      profileLoading ||
+      !isBookingProfileComplete(profile?.sdt, user.email_confirmed_at, user.new_email)
+    ) {
+      openProfileEditor({ requirePhone: true });
+      return;
+    }
+
     const selectedPaymentMethod = method;
     const expiresAt =
       Math.min(...tickets.map((item) => new Date(item.created_at).getTime())) + HOLD_DURATION_MS;
@@ -288,20 +332,18 @@ function CheckoutPage() {
       });
 
       if (result.status === "expired") {
-        preserveTicketRef.current = true;
-        toast.error("Đã hết thời gian giữ vé.");
+        toast.error(t("Hold expired"));
         await navigate({ to: "/my-bookings", replace: true });
         return;
       }
 
-      preserveTicketRef.current = true;
       toast.success(
         result.alreadyPaid
-          ? "This demo payment was already confirmed for this booking."
-          : "Demo payment confirmed. Your booking is marked as paid.",
+          ? t("This demo payment was already confirmed for this booking.")
+          : t("Demo payment confirmed. Your booking is marked as paid."),
       );
       if (result.ticketIssueStatus === "pending_issue") {
-        toast.info("Payment is confirmed. Ticket issuance is pending.");
+        toast.info(t("Payment is confirmed. Ticket issuance is pending."));
       }
       await navigate({
         to: "/eticket/$orderId",
@@ -309,7 +351,17 @@ function CheckoutPage() {
       });
     } catch (error) {
       console.error("Lỗi thanh toán:", error);
-      toast.error(error instanceof Error ? error.message : "Payment could not be completed.");
+      if (error instanceof Error && error.message.includes("PROFILE_INCOMPLETE")) {
+        try {
+          await refreshAuthProfile();
+        } catch (refreshError) {
+          console.error("Unable to refresh profile after payment eligibility check.", refreshError);
+        }
+        openProfileEditor({ requirePhone: true });
+        toast.error(t("Please add a phone number and verify your email before payment."));
+        return;
+      }
+      toast.error(error instanceof Error ? t(error.message) : t("Payment could not be completed."));
     } finally {
       setBusy(false);
     }
@@ -325,61 +377,92 @@ function CheckoutPage() {
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <Button asChild variant="ghost" size="sm" className="mb-5">
           <Link to="/tours">
-            <ArrowLeft className="size-4" aria-hidden /> Back to tours
+            <ArrowLeft className="size-4" aria-hidden /> {t("Back to tours")}
           </Link>
         </Button>
 
-        <h1 className="font-display text-2xl font-extrabold sm:text-3xl">Checkout</h1>
+        <h1 className="font-display text-2xl font-extrabold sm:text-3xl">{t("Checkout")}</h1>
         {loading ? (
           <div className="grid min-h-64 place-items-center" role="status">
-            <Loader2 className="size-8 animate-spin text-primary" aria-label="Loading checkout" />
+            <Loader2
+              className="size-8 animate-spin text-primary"
+              aria-label={t("Loading checkout")}
+            />
           </div>
         ) : ticket ? (
           <>
             <div className="mt-5 flex flex-wrap items-center gap-3 rounded-xl border border-accent/40 bg-accent/10 p-4">
               <Timer className="size-5 text-accent" aria-hidden />
-              <span className="font-semibold">{expired ? "Hold expired" : "Ticket held for"}</span>
+              <span className="font-semibold">
+                {expired ? t("Hold expired") : t("Ticket held for")}
+              </span>
               <span className="font-mono text-lg font-bold tabular-nums" aria-live="polite">
                 {minutes}:{seconds}
               </span>
               <span className="text-sm text-muted-foreground">
                 {expired
-                  ? "This ticket is being released."
-                  : "Complete payment before the timer ends."}
+                  ? t("This ticket is being released.")
+                  : t("Complete payment before the timer ends.")}
               </span>
             </div>
 
+            {!profileLoading &&
+              !isBookingProfileComplete(
+                profile?.sdt,
+                user?.email_confirmed_at,
+                user?.new_email,
+              ) && (
+                <div
+                  role="alert"
+                  className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+                >
+                  <p className="text-sm font-medium">
+                    {t("Please add a phone number and verify your email before payment.")}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openProfileEditor({ requirePhone: true })}
+                  >
+                    {t("Complete profile")}
+                  </Button>
+                </div>
+              )}
+
             <div className="mt-6 grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
               <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-                <h2 className="font-display text-lg font-bold">Booking details</h2>
+                <h2 className="font-display text-lg font-bold">{t("Booking details")}</h2>
                 <p className="mt-3 text-base font-semibold">{tourTitle}</p>
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                   <BookingDetail
-                    label="Travel date"
-                    value={ticket.travel_date ?? "Not specified"}
+                    label={t("Travel date")}
+                    value={ticket.travel_date ?? t("Not specified")}
                   />
-                  <BookingDetail label="Ticket quantity" value={String(tickets.length)} />
+                  <BookingDetail label={t("Ticket quantity")} value={String(tickets.length)} />
                   <BookingDetail
-                    label="Pickup location"
-                    value={ticket.pickup_location || "Not specified"}
+                    label={t("Pickup location")}
+                    value={ticket.pickup_location || t("Not specified")}
                   />
-                  <BookingDetail label="Ticket status" value={t(ticket.ticket_status)} />
+                  <BookingDetail label={t("Ticket status")} value={t(ticket.ticket_status)} />
                 </dl>
               </section>
 
               <aside className="h-fit rounded-2xl border border-border bg-card p-5 shadow-soft">
-                <h2 className="font-display text-lg font-bold">Payment method</h2>
+                <h2 className="font-display text-lg font-bold">{t("Payment method")}</h2>
                 <p
                   role="status"
                   className="mt-3 rounded-lg border border-accent/40 bg-accent/10 p-3 text-xs text-muted-foreground"
                 >
-                  Demo payment only. No real payment is collected or sent to a payment provider.
+                  {t(
+                    "Demo payment only. No real payment is collected or sent to a payment provider.",
+                  )}
                 </p>
                 <div className="mt-4 grid gap-2">
-                  {paymentMethods.map(({ id, label, Icon }) => (
+                  {availableMethods.map(({ id, label, logo, Icon }) => (
                     <label
                       key={id}
-                      className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 ${
+                      className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 ${
                         method === id
                           ? "border-primary bg-primary/5 ring-1 ring-primary"
                           : "border-border"
@@ -393,19 +476,19 @@ function CheckoutPage() {
                         onChange={() => setMethod(id)}
                         className="accent-primary"
                       />
-                      <Icon className="size-4" aria-hidden />
-                      <span className="text-sm font-medium">{label}</span>
+                      <PaymentMethodIcon label={label} logo={logo} Icon={Icon} />
+                      <span className="text-sm font-medium">{t(label)}</span>
                     </label>
                   ))}
                 </div>
                 {method === "bank_transfer" && (
                   <div className="mt-3 flex items-center gap-2 rounded-lg bg-secondary p-3 text-sm text-muted-foreground">
                     <QrCode className="size-5 shrink-0" aria-hidden />
-                    Mock bank-transfer QR payment
+                    {t("Mock bank-transfer QR payment")}
                   </div>
                 )}
                 <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                  <span className="font-medium">Total</span>
+                  <span className="font-medium">{t("Total")}</span>
                   <span className="font-display text-xl font-extrabold">
                     {formatPrice(tickets.reduce((total, item) => total + Number(item.price), 0))}
                   </span>
@@ -415,14 +498,23 @@ function CheckoutPage() {
                   size="lg"
                   className="mt-4 w-full"
                   onClick={() => void pay()}
-                  disabled={busy || expired}
+                  disabled={
+                    busy ||
+                    expired ||
+                    profileLoading ||
+                    !isBookingProfileComplete(
+                      profile?.sdt,
+                      user?.email_confirmed_at,
+                      user?.new_email,
+                    )
+                  }
                 >
                   {busy ? (
                     <Loader2 className="size-4 animate-spin" aria-hidden />
                   ) : (
                     <Banknote className="size-4" aria-hidden />
                   )}
-                  {busy ? "Processing..." : "Pay"}
+                  {busy ? t("Processing...") : t("Pay")}
                 </Button>
                 <Button
                   variant="outline"
@@ -430,7 +522,7 @@ function CheckoutPage() {
                   onClick={() => void finishTicket("cancelled")}
                   disabled={busy}
                 >
-                  Cancel booking
+                  {t("Cancel booking")}
                 </Button>
               </aside>
             </div>

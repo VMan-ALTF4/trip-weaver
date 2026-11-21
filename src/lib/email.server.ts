@@ -25,7 +25,6 @@ interface OrderTicketRow {
 
 interface OrderProfileRow {
   id: string;
-  email: string | null;
   name?: string | null;
 }
 
@@ -216,7 +215,10 @@ function isOrderProfileRows(value: unknown): value is OrderProfileRow[] {
   return Array.isArray(value) && value.every((row) => {
     if (typeof row !== "object" || row === null) return false;
     const item = row as Record<string, unknown>;
-    return typeof item["id"] === "string" && (typeof item["email"] === "string" || item["email"] === null);
+    return (
+      typeof item["id"] === "string" &&
+      (typeof item["name"] === "string" || item["name"] === null)
+    );
   });
 }
 
@@ -325,9 +327,12 @@ async function getOrderEmailSummary(orderId: string): Promise<{ recipientEmail: 
   }
 
   const profileIds = [...new Set(ticketRows.map((row) => row.user_id))];
+  if (profileIds.length !== 1 || !profileIds[0]) {
+    throw new Error("The order does not have a single ticket owner.");
+  }
   const { data: profiles, error: profileError } = await database
     .from("profiles")
-    .select("id, email, name")
+    .select("id, name")
     .in("id", profileIds);
   if (profileError) throw new Error(`Unable to load the order profile: ${profileError.message}`);
   if (!isOrderProfileRows(profiles)) {
@@ -335,10 +340,14 @@ async function getOrderEmailSummary(orderId: string): Promise<{ recipientEmail: 
   }
 
   const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
-  const recipientProfile = (profileIds.map((profileId) => profileMap.get(profileId)).find((profile) => !!profile?.email) ?? null) as OrderProfileRow | null;
-  if (!recipientProfile || !recipientProfile.email) {
-    throw new Error("No valid recipient email is available for this order.");
-  }
+  const recipientProfile = profileMap.get(profileIds[0]);
+  if (!recipientProfile) throw new Error("No profile is available for this order.");
+  const {
+    data: { user: recipientUser },
+    error: recipientError,
+  } = await supabaseAdmin.auth.admin.getUserById(profileIds[0]);
+  if (recipientError) throw new Error(`Unable to load the account email: ${recipientError.message}`);
+  if (!recipientUser?.email) throw new Error("No account email is available for this order.");
 
   const ticketIds = ticketRows.map((row) => row.id);
   const { data: etickets, error: eticketError } = await database
@@ -363,7 +372,7 @@ async function getOrderEmailSummary(orderId: string): Promise<{ recipientEmail: 
   });
 
   return {
-    recipientEmail: recipientProfile.email,
+    recipientEmail: recipientUser.email,
     recipientName: recipientProfile.name ?? "traveller",
     ticketRows: ticketRowsForEmail,
   };
