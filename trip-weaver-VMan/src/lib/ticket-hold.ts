@@ -1,0 +1,1 @@
+export const TICKET_HOLD_DURATION_MS = 10 * 60 * 1000;
