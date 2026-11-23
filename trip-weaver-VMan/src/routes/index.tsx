@@ -15,6 +15,7 @@ import heroImage from "@/assets/hero-coast.jpg";
 import { SiteHeader } from "@/components/site/header";
 import { SiteFooter } from "@/components/site/footer";
 import { TourCard } from "@/components/site/tour-card";
+import { CustomerReviewsFeed, TourCardsWithReviews } from "@/components/reviews/trip-reviews";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTourCatalog } from "@/lib/tour-catalog";
@@ -200,20 +201,20 @@ function HomePage() {
             </Button>
           </div>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {loading ? (
-              <p className="text-sm text-muted-foreground">Loading tours...</p>
-            ) : error ? (
-              <p role="alert" className="text-sm text-destructive">
-                Unable to load tours: {error}
-              </p>
-            ) : activeTours.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tours are currently available.</p>
-            ) : (
-              activeTours.map((tour) => <TourCard key={tour.id} tour={tour} />)
-            )}
-          </div>
+          {loading ? (
+            <p className="mt-8 text-sm text-muted-foreground">Loading tours...</p>
+          ) : error ? (
+            <p role="alert" className="mt-8 text-sm text-destructive">
+              Unable to load tours: {error}
+            </p>
+          ) : activeTours.length === 0 ? (
+            <p className="mt-8 text-sm text-muted-foreground">No tours are currently available.</p>
+          ) : (
+            <TourCardsWithReviews tours={activeTours} />
+          )}
         </section>
+
+        <CustomerReviewsFeed tours={activeTours} />
 
         {/* Why choose us */}
         <section className="border-y border-border bg-card">

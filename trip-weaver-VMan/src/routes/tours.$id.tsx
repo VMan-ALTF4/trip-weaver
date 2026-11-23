@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AuthDialog } from "@/components/auth/auth-dialog";
+import { TripReviewsSection } from "@/components/reviews/trip-reviews";
 import { SiteHeader } from "@/components/site/header";
 import { SiteFooter } from "@/components/site/footer";
 import { Button } from "@/components/ui/button";
@@ -207,6 +208,17 @@ function TourDetailPage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [booking, setBooking] = useState(false);
   const [checkoutIntentReady, setCheckoutIntentReady] = useState(false);
+  const [reviewSummary, setReviewSummary] = useState<{
+    average: number | null;
+    count: number | null;
+  }>({ average: null, count: null });
+  const handleReviewSummaryChange = useCallback(
+    (summary: { average: number | null; count: number | null }) => setReviewSummary(summary),
+    [],
+  );
+  useEffect(() => {
+    setReviewSummary({ average: null, count: null });
+  }, [tourId]);
   const resumeCheckoutAfterProfile = useRef(false);
   const goCheckoutRef = useRef<() => Promise<void>>(async () => {});
 
@@ -529,8 +541,17 @@ function TourDetailPage() {
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <h1 className="font-display text-2xl font-extrabold sm:text-3xl">{tour.title}</h1>
               <div className="flex items-center gap-1 text-sm font-semibold">
-                <Star className="size-4 fill-accent text-accent" aria-hidden /> {tour.rating}
-                <span className="font-normal text-muted-foreground">({tour.reviews})</span>
+                {reviewSummary.count === 0 ? (
+                  <span className="font-normal text-muted-foreground">Chưa có đánh giá</span>
+                ) : (
+                  <>
+                    <Star className="size-4 fill-accent text-accent" aria-hidden />
+                    {reviewSummary.average === null ? "—" : reviewSummary.average.toFixed(1)}
+                    <span className="font-normal text-muted-foreground">
+                      ({reviewSummary.count === null ? "…" : reviewSummary.count})
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -861,6 +882,13 @@ function TourDetailPage() {
             </div>
           </aside>
         </div>
+        {tour && (
+          <TripReviewsSection
+            key={tour.id}
+            tourId={tour.id}
+            onSummaryChange={handleReviewSummaryChange}
+          />
+        )}
       </main>
 
       <SiteFooter />

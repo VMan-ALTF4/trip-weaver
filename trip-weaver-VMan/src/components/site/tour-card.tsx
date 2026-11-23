@@ -3,6 +3,7 @@ import { Bus, CalendarDays, Clock, MapPin, Star, Ticket, TrainFront, Car } from 
 import { Badge } from "@/components/ui/badge";
 import { transportLabels, type Tour } from "@/lib/tat-data";
 import { useCurrency } from "@/lib/currency";
+import { useTourReviewSummary, type TourReviewSummary } from "@/lib/tour-review-summary";
 import fallbackTourImage from "@/assets/hero-coast.jpg";
 
 const transportIcon = { bus: Bus, train: TrainFront, car: Car };
@@ -16,13 +17,17 @@ export function TourCard({
   tour,
   layout = "grid",
   passengers,
+  reviewSummary,
 }: {
   tour: Tour;
   layout?: "grid" | "row";
   passengers?: number;
+  reviewSummary?: TourReviewSummary;
 }) {
   const { formatPrice } = useCurrency();
   const Icon = transportIcon[tour.transport];
+  const fetchedReviewSummary = useTourReviewSummary(tour.id, !reviewSummary);
+  const rating = reviewSummary ?? fetchedReviewSummary;
 
   return (
     <Link
@@ -59,14 +64,36 @@ export function TourCard({
           <MapPin className="size-3.5 shrink-0" aria-hidden />
           <span className="truncate">{tour.destination}</span>
           <span className="ml-auto inline-flex items-center gap-1 font-semibold text-foreground">
-            <Star className="size-3.5 fill-accent text-accent" aria-hidden />
-            {tour.rating}
-            <span className="font-normal text-muted-foreground">({tour.reviews})</span>
+            {rating.status === "loading" ? (
+              <span className="font-normal text-muted-foreground">Đang tải đánh giá...</span>
+            ) : rating.status === "error" ? (
+              <span className="font-normal text-muted-foreground">Chưa thể tải đánh giá</span>
+            ) : rating.status === "empty" ? (
+              <span className="font-normal text-muted-foreground">Chưa có đánh giá</span>
+            ) : (
+              <>
+                <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden />
+                {rating.average?.toFixed(1)}
+                <span className="font-normal text-muted-foreground">({rating.count} đánh giá)</span>
+              </>
+            )}
           </span>
         </div>
 
         <h3 className="line-clamp-2 font-display text-base font-bold leading-snug">{tour.title}</h3>
         <p className="line-clamp-2 text-sm text-muted-foreground">{tour.summary}</p>
+
+        {rating.status === "ready" && rating.latest && (
+          <div className="rounded-lg bg-muted/40 p-3">
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="font-semibold">{rating.latest.customerName}</span>
+              <time className="shrink-0 text-muted-foreground">{rating.latest.date}</time>
+            </div>
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+              {rating.latest.comment || "Khách hàng đã gửi đánh giá cho chuyến đi."}
+            </p>
+          </div>
+        )}
 
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-2 text-xs text-muted-foreground">
           <Badge variant="outline" className="gap-1 font-medium">

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SiteFooter } from "@/components/site/footer";
 import { SiteHeader } from "@/components/site/header";
+import { ReviewBookingAction, type TripReview } from "@/components/reviews/trip-reviews";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrency } from "@/lib/currency";
 import { useLanguage } from "@/lib/language";
 import { getOrderEtickets } from "@/lib/eticket-view.server";
+import { getTourImageUrl } from "@/lib/tour-images";
 
 type Booking = {
   id: string;
@@ -37,6 +39,9 @@ type Booking = {
   ticket_issue_status: "pending_issue" | "issued" | null;
   tour_name: string;
   ticket_code: string | null;
+  tour_image: string | null;
+  guide_name: string | null;
+  review: TripReview | null;
 };
 
 type TicketStatus = Booking["ticket_status"];
@@ -76,7 +81,7 @@ export const Route = createFileRoute("/my-bookings")({
 
 function MyBookingsPage() {
   const { t, language } = useLanguage();
-  const { user, loading: authLoading } = useAuth();
+  const { user, displayName, loading: authLoading } = useAuth();
   const { formatPrice } = useCurrency();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,16 +116,31 @@ function MyBookingsPage() {
           throw error;
         }
 
-        const rows = (data ?? []) as Omit<Booking, "tour_name" | "ticket_code">[];
+        const rows = (data ?? []) as Omit<
+          Booking,
+          "tour_name" | "ticket_code" | "tour_image" | "guide_name" | "review"
+        >[];
         const tourIds = [...new Set(rows.map((booking) => booking.tour_id))];
         const { data: tours, error: toursError } = tourIds.length
-          ? await client.from("Tour").select("tour_id, tour_name").in("tour_id", tourIds)
+          ? await client.from("Tour").select("*").in("tour_id", tourIds)
           : { data: [], error: null };
         if (toursError) {
           console.error("Lỗi fetch bookings:", toursError);
           throw toursError;
         }
 
+        const { data: reviews } = rows.length
+          ? await client
+              .from("trip_reviews")
+              .select("*")
+              .in(
+                "booking_id",
+                rows.map((booking) => booking.id),
+              )
+          : { data: [] };
+        const reviewByBooking = new Map(
+          ((reviews ?? []) as TripReview[]).map((review) => [review.booking_id, review]),
+        );
         const soldTicketIds = rows
           .filter((booking) => booking.ticket_status === "sold")
           .map((booking) => booking.id);
@@ -132,12 +152,7 @@ function MyBookingsPage() {
           throw eticketsError;
         }
 
-        const tourNames = new Map(
-          (tours ?? []).map((tour) => [
-            String(tour["tour_id"]),
-            String(tour["tour_name"] ?? "Tour booking"),
-          ]),
-        );
+        const tourNames = new Map((tours ?? []).map((tour) => [String(tour["tour_id"]), tour]));
         const ticketCodes = new Map(
           (etickets ?? []).map((eticket) => [
             String(eticket["ticket_id"]),
@@ -148,8 +163,19 @@ function MyBookingsPage() {
           setBookings(
             rows.map((booking) => ({
               ...booking,
-              tour_name: tourNames.get(booking.tour_id) ?? "Tour booking",
+              tour_name: String(tourNames.get(booking.tour_id)?.["tour_name"] ?? "Tour booking"),
               ticket_code: ticketCodes.get(booking.id) ?? null,
+              tour_image: tourNames.get(booking.tour_id)
+                ? getTourImageUrl(
+                    String(
+                      tourNames.get(booking.tour_id)?.["image_url"] ??
+                        tourNames.get(booking.tour_id)?.["image"] ??
+                        "",
+                    ),
+                  ) || null
+                : null,
+              guide_name: null,
+              review: reviewByBooking.get(booking.id) ?? null,
             })),
           );
         }
@@ -354,6 +380,19 @@ function MyBookingsPage() {
                             {t("Complete payment")}
                           </Link>
                         </Button>
+                      )}
+                      {booking.ticket_status === "sold" && (
+                        <ReviewBookingAction
+                          booking={booking}
+                          customerName={displayName}
+                          onSubmitted={(review) =>
+                            setBookings((current) =>
+                              current.map((item) =>
+                                item.id === booking.id ? { ...item, review } : item,
+                              ),
+                            )
+                          }
+                        />
                       )}
                       {booking.ticket_status === "sold" && (
                         <div className="mt-4 flex items-center justify-between border-t border-border pt-3">

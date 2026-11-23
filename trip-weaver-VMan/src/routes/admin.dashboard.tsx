@@ -31,6 +31,7 @@ import { useLanguage } from "@/lib/language";
 import fallbackTourImage from "@/assets/hero-coast.jpg";
 import { USD_TO_VND_RATE, useCurrency } from "@/lib/currency";
 import { SITE_CONTACT } from "@/lib/site-contact";
+import { AdminReviewsTab } from "@/components/reviews/trip-reviews";
 import {
   getAdminTicketStats,
   getAdminSystemStatus,
@@ -76,7 +77,7 @@ export const Route = createFileRoute("/admin/dashboard")({
 
 const transportIcon = { bus: Bus, train: TrainFront, car: Car } as const;
 
-const tabs = ["Tours & Catalog", "Transport & Providers", "Bookings & Revenue", "Users & Security"] as const;
+const tabs = ["Tours & Catalog", "Transport & Providers", "Bookings & Revenue", "Tour Reviews", "Users & Security"] as const;
 type Tab = (typeof tabs)[number];
 
 type TimelineActivity = {
@@ -465,6 +466,7 @@ function AdminDashboard() {
             />
           )}
           {tab === "Users & Security" && <UsersTab />}
+          {tab === "Tour Reviews" && <AdminReviewsTab />}
         </div>
       </main>
 
